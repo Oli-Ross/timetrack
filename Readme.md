@@ -7,7 +7,8 @@ A simple tool to track working hours by task via CLI.
 Link script:
 
 ```bash
-sudo ln -s /usr/bin/local/task ./timetrack.py
+chmod +x ./timetrack.py
+sudo ln -s "$(pwd)/timetrack.py" /usr/local/bin/task
 ```
 
 ## CLI interface
