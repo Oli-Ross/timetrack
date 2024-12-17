@@ -2,6 +2,14 @@
 
 A simple tool to track working hours by task via CLI.
 
+## Setup 
+
+Link script:
+
+```bash
+sudo ln -s /usr/bin/local/task ./timetrack.py
+```
+
 ## CLI interface
 
 - `task status`: Show the currently running task: start time, duration, name
