@@ -11,7 +11,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List
 
-TIMETRACK_DB = "timetrack.db"
+TIMETRACK_DB = "/tmp/timetrack.db"
 STATUSBAR_FILE = "/tmp/task"
 ARCHIVE_DIR = Path("/tmp")
 
@@ -76,7 +76,7 @@ def get_task_length_in_mins(cursor, uuid):
     task = get_task(cursor, uuid)
     if not task[2]:
         return 0
-    return int((task[2] - task[1]) / 60)
+    return int((float(task[2]) - float(task[1])) / 60)
 
 
 def get_task_lengths_in_mins(cursor, uuids: List[str]):
@@ -140,14 +140,17 @@ def stop_task(cursor):
         (datetime.now().timestamp(), uuid),
     )
     start_time = datetime.fromtimestamp(task[1])
-    diff_mins = int(((datetime.now() - start_time).total_seconds() % 3600) // 60)
+    diff_mins = int(
+        ((datetime.now() - start_time).total_seconds() %
+         3600) // 60)
     print(f"Ended task {uuid} (ran for {diff_mins} mins).")
 
 
 def show_task(cursor, uuid, showDate=False, showWeekDay=True):
     task = get_task(cursor, uuid)
     if showDate:
-        start_time = datetime.fromtimestamp(task[1]).strftime("%a %-d.%-m.: %-H:%M")
+        start_time = datetime.fromtimestamp(
+            task[1]).strftime("%a %-d.%-m.: %-H:%M")
     elif showWeekDay:
         start_time = datetime.fromtimestamp(task[1]).strftime("%a: %-H:%M")
     else:
@@ -257,7 +260,8 @@ def show_today_tasks(cursor):
     total_mins = get_task_lengths_in_mins(cursor, todayTaskUUIDs)
     mins = total_mins % 60
     hours = total_mins // 60
-    print(today.strftime(f"Tasks on %a, %-d.%-m. ({hours:02}:{mins:02} spent):"))
+    print(today.strftime(
+        f"Tasks on %a, %-d.%-m. ({hours:02}:{mins:02} spent):"))
     for uuid in todayTaskUUIDs:
         print(show_task(cursor, uuid, showWeekDay=False))
 
@@ -272,7 +276,8 @@ def show_this_week_tasks(cursor):
     total_mins = get_task_lengths_in_mins(cursor, thisWeekUUIDs)
     hours = total_mins // 60
     mins = total_mins % 60
-    print(f"Tasks in KW {this_week}/{this_year} ({hours:02}:{mins:02} so far):")
+    print(
+        f"Tasks in KW {this_week}/{this_year} ({hours:02}:{mins:02} so far):")
     for uuid in thisWeekUUIDs:
         print(show_task(cursor, uuid, showWeekDay=True))
 
@@ -337,13 +342,12 @@ def show_status(cursor):
 
     task = cursor.fetchone()
     start_time = datetime.fromtimestamp(task[1])
-    diff_mins = int(((datetime.now() - start_time).total_seconds() % 3600) // 60)
+    diff_mins = int(
+        ((datetime.now() - start_time).total_seconds() %
+         3600) // 60)
     start_time = start_time.strftime("%-H:%M")
     print(
-        f'Task "{
-            task[3]}" with UUID {
-            task[0]} is running since {start_time} ({diff_mins} mins).'
-    )
+        f'Task "{task[3]}" with UUID {task[0]} is running since {start_time} ({diff_mins} mins).')
 
 
 def push_unlogged_tasks(cursor):
@@ -365,30 +369,34 @@ def push_unlogged_tasks(cursor):
             "project_id": project_id,
             "task_id": task_id,
         }
+        print(data)
 
         EMAIL = os.environ.get("EMAIL")
         HARVEST_TOKEN = os.environ.get("HARVEST_TOKEN")
         HARVEST_ACCOUNT_ID = os.environ.get("HARVEST_TOKEN")
+        if None in (EMAIL, HARVEST_ACCOUNT_ID, HARVEST_TOKEN):
+            print("Environment variable for Harvest upload is missing.")
+            print("Aborting upload.")
+            return
 
         url = "https://api.harvestapp.com/v2/time_entries"
         headers = {
             "User-Agent": f"MyIntegration ({EMAIL})",
-            "Authorization": "Bearer " + HARVEST_TOKEN,
-            "Harvest-Account-Id": HARVEST_ACCOUNT_ID,
+            "Authorization": "Bearer " + str(HARVEST_TOKEN),
+            "Harvest-Account-Id": str(HARVEST_ACCOUNT_ID),
         }
 
         request = urllib.request.Request(url=url, headers=headers, data=data)
-        continue
         with urllib.request.urlopen(request, timeout=5) as response:
-            responseCode = responde.getcode()
+            responseCode = response.getcode()
             if responseCode != 201:
                 responseBody = response.read().decode("utf-8")
                 jsonResponse = json.loads(responseBody)
                 print(json.dumps(jsonResponse, sort_keys=True, indent=2))
-                raise RequestException(f"Couldn't push task {uuid} to Harvest.")
-        
-    print("Successfully pushed all unlogged tasks to Harvest.")
+                raise Exception(
+                    f"Request failed: Couldn't push task {uuid} to Harvest.")
 
+    print("Successfully pushed all unlogged tasks to Harvest.")
 
 
 def main():
@@ -417,9 +425,13 @@ def main():
     subparsers.add_parser(
         "unlog", help="Undo the last operation that marked tasks logged."
     )
-    subparsers.add_parser("status", help="Show info about currently running task")
+    subparsers.add_parser(
+        "status",
+        help="Show info about currently running task")
     subparsers.add_parser("stop", help="Stop current task")
-    subparsers.add_parser("print", help="Print current week in human readable format")
+    subparsers.add_parser(
+        "print",
+        help="Print current week in human readable format")
     subparsers.add_parser("push", help="Upload unlogged tasks to Harvest")
 
     args = parser.parse_args()
