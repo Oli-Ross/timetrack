@@ -9,7 +9,7 @@ from typing import Dict, List
 
 TIMETRACK_DB = "timetrack.db"
 STATUSBAR_FILE = "/tmp/task"
-CURRENT_WEEK_DIR = Path("/tmp")
+ARCHIVE_DIR = Path("/tmp")
 
 
 def adapt_datetime_epoch(val):
@@ -363,7 +363,7 @@ def print_this_week(cursor):
             output += weekday_heading
         output += show_task(cursor, task[0], showWeekDay=False) + "\n"
 
-    CURRENT_WEEK_FILE = CURRENT_WEEK_DIR / f"KW_{this_week}.md"
+    CURRENT_WEEK_FILE = ARCHIVE_DIR / f"KW_{this_week}.md"
     with open(CURRENT_WEEK_FILE, "w") as f:
         f.write(output)
     print(output)
