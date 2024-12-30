@@ -173,6 +173,21 @@ def show_today_tasks(cursor):
     for uuid in todayTaskUUIDs:
         show_task(cursor, uuid, showWeekDay = False)
 
+def show_this_week_tasks(cursor):
+    this_week = datetime.today().date().isocalendar()[1]
+    this_year = datetime.today().date().isocalendar()[0]
+    print(f"Tasks in KW {this_week}/{this_year}:")
+    cursor.execute(
+            """
+            SELECT * FROM tasks
+            """
+            )
+    tasks = cursor.fetchall()
+    todayTaskUUIDs = [x[0] for x in tasks if datetime.fromtimestamp(x[1]).date().isocalendar()[1] == this_week and datetime.fromtimestamp(x[1]).date().isocalendar()[0] == this_year]
+    for uuid in todayTaskUUIDs:
+        show_task(cursor, uuid, showWeekDay = True)
+    pass
+
 def add_example_task(cursor):
     task_data = {
         "uuid": get_short_uuid(),
@@ -220,7 +235,7 @@ def main():
             case "show":
                 match args.filter:
                     case "week":
-                        raise NotImplementedError
+                        show_this_week_tasks(cursor)
                     case "today":
                         show_today_tasks(cursor)
                     case "unlogged":
