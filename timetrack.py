@@ -156,7 +156,7 @@ def show_task(cursor, uuid, showDate=False, showWeekDay=True):
     if task[2]:
         end_time = datetime.fromtimestamp(task[2]).strftime(" - %-H:%M")
     else:
-        end_time = " - ?"
+        end_time = " - ?    "
     return start_time + end_time + f", {task[3]}"
 
 
@@ -272,7 +272,7 @@ def show_today_tasks(cursor):
     total_mins = get_task_lengths_in_mins(cursor, todayTaskUUIDs)
     mins = total_mins % 60
     hours = total_mins // 60
-    print(today.strftime(f"Tasks on %a, %-d.%-m. ({hours}:{mins} spent):"))
+    print(today.strftime(f"Tasks on %a, %-d.%-m. ({hours:02}:{mins:02} spent):"))
     for uuid in todayTaskUUIDs:
         print(show_task(cursor, uuid, showWeekDay=False))
 
@@ -287,7 +287,7 @@ def show_this_week_tasks(cursor):
     total_mins = get_task_lengths_in_mins(cursor, thisWeekUUIDs)
     hours = total_mins // 60
     mins = total_mins % 60
-    print(f"Tasks in KW {this_week}/{this_year} ({hours}:{mins} so far):")
+    print(f"Tasks in KW {this_week}/{this_year} ({hours:02}:{mins:02} so far):")
     for uuid in thisWeekUUIDs:
         print(show_task(cursor, uuid, showWeekDay=True))
 
@@ -323,7 +323,7 @@ def print_this_week(cursor):
     mins = total_mins % 60
     if len(this_week) == 1:
         this_week: str = "0" + this_week
-    output += f"# KW {this_week} / {this_year} ({hours}:{mins} spent)\n"
+    output += f"# KW {this_week} / {this_year} ({hours:02}:{mins:02} spent)\n"
 
     current_weekday = ""
     for task in tasks:
