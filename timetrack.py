@@ -109,14 +109,7 @@ def stop_task(cursor):
 
 
 def show_task(cursor, uuid, showDate=False, showWeekDay=True):
-    cursor.execute(
-        """
-            SELECT * FROM tasks
-            WHERE uuid = ?;
-            """,
-        (uuid,),
-    )
-    task = cursor.fetchone()
+    task = get_task(cursor, uuid)
     if showDate:
         start_time = datetime.fromtimestamp(
             task[1]).strftime("%a %-d.%-m.: %-H:%M")
@@ -184,13 +177,7 @@ def unlog_tasks(cursor):
         """,
             (False, uuid),
         )
-        cursor.execute(
-            """
-                SELECT * FROM tasks
-                WHERE uuid = ?
-                """, (uuid,)
-        )
-        task = cursor.fetchone()
+        task = get_task(cursor, uuid)
         print(f"{task[0]}: {task[3]}")
     cursor.execute(
         """
@@ -231,8 +218,8 @@ def log_tasks(cursor):
 
 def show_db(cursor):
     print("\n\n----------------------- Debug output:")
-    cursor.execute("SELECT * FROM tasks")
-    for row in cursor.fetchall():
+    tasks = get_all_tasks(cursor)
+    for row in tasks:
         print(row)
     print("\n\n----------------------- Last logged:")
     cursor.execute("SELECT * FROM last_logged")
@@ -242,16 +229,14 @@ def show_db(cursor):
 
 def show_today_tasks(cursor):
     today = datetime.today().date()
-    print(today.strftime("Tasks on %a, %-d.%-m.:"))
-    cursor.execute(
-        """
-            SELECT * FROM tasks
-            """
-    )
-    tasks = cursor.fetchall()
+    tasks = get_all_tasks(cursor)
     todayTaskUUIDs = [
         x[0] for x in tasks if datetime.fromtimestamp(x[1]).date() == today
     ]
+    total_mins = get_task_lengths_in_mins(cursor, todayTaskUUIDs)
+    mins = total_mins % 60
+    hours = total_mins // 60
+    print(today.strftime(f"Tasks on %a, %-d.%-m. ({hours}:{mins} spent):"))
     for uuid in todayTaskUUIDs:
         print(show_task(cursor, uuid, showWeekDay=False))
 
@@ -259,12 +244,7 @@ def show_today_tasks(cursor):
 def get_this_week_uuids(cursor):
     this_week = datetime.today().date().isocalendar()[1]
     this_year = datetime.today().date().isocalendar()[0]
-    cursor.execute(
-        """
-            SELECT * FROM tasks
-            """
-    )
-    tasks = cursor.fetchall()
+    tasks = get_all_tasks(cursor)
     thisWeekUUIDs = [
         x[0]
         for x in tasks
@@ -273,10 +253,17 @@ def get_this_week_uuids(cursor):
     ]
     return thisWeekUUIDs
 
+def get_all_tasks(cursor) -> List[List[str]]:
+    cursor.execute("SELECT * FROM tasks")
+    return cursor.fetchall()
+
+def get_task(cursor, uuid) -> List[str]:
+    cursor.execute("SELECT * FROM tasks WHERE uuid = ?", (uuid,))
+    return cursor.fetchone()
+
 
 def get_task_length_in_mins(cursor, uuid):
-    cursor.execute("SELECT * FROM tasks WHERE uuid = ?", (uuid,))
-    task = cursor.fetchone()
+    task = get_task(cursor, uuid)
     if not task[2]:
         return 0
     return int((task[2] - task[1]) / 60)
@@ -304,17 +291,6 @@ def show_this_week_tasks(cursor):
         print(show_task(cursor, uuid, showWeekDay=True))
 
 
-def add_example_task(cursor):
-    task_data = {
-        "uuid": get_short_uuid(),
-        "start_time": datetime.now().timestamp(),
-        "end_time": datetime.now().timestamp(),
-        "name": "My Task",
-        "is_logged": False,
-    }
-
-    add_task(cursor, task_data)
-
 
 def update_statusbar(cursor):
     if not is_task_running(cursor):
@@ -338,12 +314,7 @@ def print_this_week(cursor):
     thisWeekUUIDs = get_this_week_uuids(cursor)
     tasks = []
     for uuid in thisWeekUUIDs:
-        cursor.execute("""
-                       SELECT * FROM tasks
-                       WHERE uuid = ?
-                       """, (uuid,)
-                       )
-        task = cursor.fetchone()
+        task = get_task(cursor, uuid)
         tasks.append(task)
     this_week = str(datetime.today().date().isocalendar()[1])
     this_year = str(datetime.today().date().isocalendar()[0])
@@ -447,7 +418,7 @@ def main():
             case _:
                 raise ValueError
 
-        #  show_db(cursor)
+        show_db(cursor)
         update_statusbar(cursor)
 
 
