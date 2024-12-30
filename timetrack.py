@@ -88,7 +88,7 @@ def stop_task(cursor):
         (datetime.now().timestamp(), uuid),
     )
 
-def show_task(cursor, uuid, showDate = False):
+def show_task(cursor, uuid, showDate = False, showWeekDay = True):
     cursor.execute(
             """
             SELECT * FROM tasks
@@ -98,8 +98,11 @@ def show_task(cursor, uuid, showDate = False):
     task = cursor.fetchone()
     if showDate:
         start_time = datetime.fromtimestamp(task[1]).strftime("%a %-d.%-m.: %-H:%M")
-    else:
+    elif showWeekDay:
         start_time = datetime.fromtimestamp(task[1]).strftime("%a: %-H:%M")
+    else:
+        start_time = datetime.fromtimestamp(task[1]).strftime("%-H:%M")
+
     end_time = datetime.fromtimestamp(task[2]).strftime(" - %-H:%M")
     print(start_time + end_time + f", {task[3]}")
 
@@ -157,6 +160,18 @@ def show_db(cursor):
     for row in cursor.fetchall():
         print(row)
 
+def show_today_tasks(cursor):
+    today = datetime.today().date()
+    print(today.strftime("Tasks on %a, %-d.%-m.:"))
+    cursor.execute(
+            """
+            SELECT * FROM tasks
+            """
+            )
+    tasks = cursor.fetchall()
+    todayTaskUUIDs = [x[0] for x in tasks if datetime.fromtimestamp(x[1]).date() == today]
+    for uuid in todayTaskUUIDs:
+        show_task(cursor, uuid, showWeekDay = False)
 
 def add_example_task(cursor):
     task_data = {
@@ -184,7 +199,7 @@ def main():
     start_parser.add_argument("task_name", help="Name of the task")
     show_parser = subparsers.add_parser("show", help="Show past tasks")
     show_parser.add_argument(
-        "filter", help="Which tasks to show", choices=["all", "week", "day", "unlogged"]
+        "filter", help="Which tasks to show", choices=["all", "week", "today", "unlogged"]
     )
     subparsers.add_parser("log", help="Mark all tasks as logged")
     subparsers.add_parser("stop", help="Stop current task")
@@ -206,8 +221,8 @@ def main():
                 match args.filter:
                     case "week":
                         raise NotImplementedError
-                    case "day":
-                        raise NotImplementedError
+                    case "today":
+                        show_today_tasks(cursor)
                     case "unlogged":
                         show_unlogged_tasks(cursor)
                     case "all":
