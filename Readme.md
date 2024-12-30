@@ -34,7 +34,7 @@ STATUSBAR_FILE = "/tmp/task"
 ARCHIVE_DIR = Path("/tmp")
 ```
 
-`TIMETRACK_DB` is the storage location of the SQLite database. 
+`TIMETRACK_DB` is the storage location of the SQLite database (make sure to use an absolute path). 
 `STATUSBAR_FILE` is the file that gets an ultra-short stat on the current running task on each invocation. 
 `ARCHIVE_DIR` is where `task print` stores the weekly human-readable reports in Markdown format.
 
