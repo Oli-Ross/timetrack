@@ -165,6 +165,7 @@ def get_unlogged_task_uuids(cursor):
         """
             SELECT * FROM tasks
             WHERE is_logged IS FALSE
+            AND end_time IS NOT NULL
             """
     )
 
