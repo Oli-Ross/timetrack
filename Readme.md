@@ -4,7 +4,7 @@ A simple tool to track working hours by task via CLI.
 
 ## Setup 
 
-Link script:
+Chmod + link the script:
 
 ```bash
 chmod +x ./timetrack.py
@@ -38,6 +38,22 @@ ARCHIVE_DIR = Path("/tmp")
 `STATUSBAR_FILE` is the file that gets an ultra-short stat on the current running task on each invocation. 
 `ARCHIVE_DIR` is where `task print` stores the weekly human-readable reports in Markdown format.
 
+## Harvest integration
+
+In order to successfully push to Harvest, you need to set 3 environment variables:
+```bash
+export EMAIL=your@email.com
+export HARVEST_ACCOUNT_ID=1234
+export HARVEST_TOKEN=1234
+```
+Read the [API doc](https://help.getharvest.com/api-v2/) for more info.
+
+Also, there are 2 more config variables that are currently hardcoded:
+```python
+PROJECT_ID = 1
+TASK_ID = 1
+```
+These IDs define to which project on Harvest the unlogged tasks are uploaded to.
 
 ## Internal architecture
 
@@ -46,4 +62,4 @@ ARCHIVE_DIR = Path("/tmp")
 
 ## TODO 
 
-Integrate with [Harvest API](https://help.getharvest.com/api-v2/timesheets-api/timesheets/time-entries/#create-a-time-entry-via-duration)
+Test Harvest integration.

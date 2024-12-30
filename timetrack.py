@@ -4,6 +4,9 @@ import sqlite3
 import uuid
 import argparse
 import logging
+import os
+import json
+import urllib.request
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List
@@ -11,6 +14,10 @@ from typing import Dict, List
 TIMETRACK_DB = "timetrack.db"
 STATUSBAR_FILE = "/tmp/task"
 ARCHIVE_DIR = Path("/tmp")
+
+PROJECT_ID = 1
+TASK_ID = 1
+
 
 def adapt_datetime_epoch(val):
     """Adapt datetime.datetime to Unix timestamp."""
@@ -338,8 +345,51 @@ def show_status(cursor):
             task[0]} is running since {start_time} ({diff_mins} mins).'
     )
 
+
 def push_unlogged_tasks(cursor):
-    raise NotImplementedError
+    unloggedUUIDs = get_unlogged_task_uuids(cursor)
+    for uuid in unloggedUUIDs:
+        task = get_task(cursor, uuid)
+        time_spent = get_task_length_in_mins(cursor, uuid) / 60
+
+        spent_date = datetime.fromtimestamp(task[1]).strftime("%Y-%m-%d")
+        hours = f"{time_spent:.2f}"
+        notes = task[3]
+        project_id = PROJECT_ID
+        task_id = TASK_ID
+
+        data = {
+            "spent_date": spent_date,
+            "hours": hours,
+            "notes": notes,
+            "project_id": project_id,
+            "task_id": task_id,
+        }
+
+        EMAIL = os.environ.get("EMAIL")
+        HARVEST_TOKEN = os.environ.get("HARVEST_TOKEN")
+        HARVEST_ACCOUNT_ID = os.environ.get("HARVEST_TOKEN")
+
+        url = "https://api.harvestapp.com/v2/time_entries"
+        headers = {
+            "User-Agent": f"MyIntegration ({EMAIL})",
+            "Authorization": "Bearer " + HARVEST_TOKEN,
+            "Harvest-Account-Id": HARVEST_ACCOUNT_ID,
+        }
+
+        request = urllib.request.Request(url=url, headers=headers, data=data)
+        continue
+        with urllib.request.urlopen(request, timeout=5) as response:
+            responseCode = responde.getcode()
+            if responseCode != 201:
+                responseBody = response.read().decode("utf-8")
+                jsonResponse = json.loads(responseBody)
+                print(json.dumps(jsonResponse, sort_keys=True, indent=2))
+                raise RequestException(f"Couldn't push task {uuid} to Harvest.")
+        
+    print("Successfully pushed all unlogged tasks to Harvest.")
+
+
 
 def main():
     parser = argparse.ArgumentParser(description="Time logging tool")
