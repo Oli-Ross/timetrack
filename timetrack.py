@@ -266,22 +266,6 @@ def show_today_tasks(cursor):
         print(show_task(cursor, uuid, showWeekDay=False))
 
 
-def show_this_week_tasks(cursor):
-    thisWeekUUIDs = get_this_week_uuids(cursor)
-    if not thisWeekUUIDs:
-        print("No tasks yet this week.")
-        return
-    this_week = datetime.today().date().isocalendar()[1]
-    this_year = datetime.today().date().isocalendar()[0]
-    total_mins = get_task_lengths_in_mins(cursor, thisWeekUUIDs)
-    hours = total_mins // 60
-    mins = total_mins % 60
-    print(
-        f"Tasks in KW {this_week}/{this_year} ({hours:02}:{mins:02} so far):")
-    for uuid in thisWeekUUIDs:
-        print(show_task(cursor, uuid, showWeekDay=True))
-
-
 def update_statusbar(cursor):
     if not is_task_running(cursor):
         output = ""
@@ -419,7 +403,7 @@ def main():
     show_parser.add_argument(
         "filter",
         help="Which tasks to show",
-        choices=["all", "week", "today", "unlogged"],
+        choices=["all", "today", "unlogged"],
     )
     subparsers.add_parser("log", help="Mark all tasks as logged")
     subparsers.add_parser(
@@ -454,8 +438,6 @@ def main():
                 push_unlogged_tasks(cursor)
             case "show":
                 match args.filter:
-                    case "week":
-                        show_this_week_tasks(cursor)
                     case "today":
                         show_today_tasks(cursor)
                     case "unlogged":
