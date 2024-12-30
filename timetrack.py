@@ -9,6 +9,12 @@ from typing import Dict
 TIMETRACK_DB = "timetrack.db"
 STATUSBAR_FILE = "/tmp/task"
 
+def adapt_datetime_epoch(val):
+    """Adapt datetime.datetime to Unix timestamp."""
+    return int(val.timestamp())
+
+
+sqlite3.register_adapter(datetime, adapt_datetime_epoch)
 
 def get_short_uuid():
     return str(uuid.uuid4())[:8]
@@ -54,7 +60,7 @@ def start_task(cursor, name: str):
 
     task_data = {
         "uuid": get_short_uuid(),
-        "start_time": datetime.now(),
+        "start_time": datetime.now().timestamp(),
         "end_time": None,
         "name": name,
         "is_logged": False,
@@ -79,7 +85,7 @@ def stop_task(cursor):
     SET end_time = ? 
     WHERE uuid = ?
     """,
-        (datetime.now(), uuid),
+        (datetime.now().timestamp(), uuid),
     )
 
 
@@ -92,8 +98,8 @@ def show_db(cursor):
 def add_example_task(cursor):
     task_data = {
         "uuid": get_short_uuid(),
-        "start_time": datetime.now(),
-        "end_time": datetime.now(),
+        "start_time": datetime.now().timestamp(),
+        "end_time": datetime.now().timestamp(),
         "name": "My Task",
         "is_logged": False,
     }
