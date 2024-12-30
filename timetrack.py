@@ -336,6 +336,9 @@ def show_status(cursor):
 
 def push_unlogged_tasks(cursor):
     unloggedUUIDs = get_unlogged_task_uuids(cursor)
+    if not unloggedUUIDs:
+        print("No tasks to be uploaded.")
+        return
     for uuid in unloggedUUIDs:
         task = get_task(cursor, uuid)
         time_spent = get_task_length_in_mins(cursor, uuid) / 60
