@@ -4,10 +4,12 @@ import sqlite3
 import uuid
 import argparse
 from datetime import datetime
-from typing import Dict
+from pathlib import Path
+from typing import Dict, List
 
 TIMETRACK_DB = "timetrack.db"
 STATUSBAR_FILE = "/tmp/task"
+CURRENT_WEEK_DIR = Path("/tmp")
 
 
 def adapt_datetime_epoch(val):
@@ -254,10 +256,9 @@ def show_today_tasks(cursor):
         show_task(cursor, uuid, showWeekDay=False)
 
 
-def show_this_week_tasks(cursor):
+def get_this_week_uuids(cursor):
     this_week = datetime.today().date().isocalendar()[1]
     this_year = datetime.today().date().isocalendar()[0]
-    print(f"Tasks in KW {this_week}/{this_year}:")
     cursor.execute(
         """
             SELECT * FROM tasks
@@ -270,6 +271,35 @@ def show_this_week_tasks(cursor):
         if datetime.fromtimestamp(x[1]).date().isocalendar()[1] == this_week
         and datetime.fromtimestamp(x[1]).date().isocalendar()[0] == this_year
     ]
+    return thisWeekUUIDs
+
+
+def get_task_length_in_mins(cursor, uuid):
+    cursor.execute("SELECT * FROM tasks WHERE uuid = ?", (uuid,))
+    task = cursor.fetchone()
+    if not task[2]:
+        return 0
+    return int((task[2] - task[1]) / 60)
+
+
+def get_task_lengths_in_mins(cursor, uuids: List[str]):
+    total_mins = 0
+    for uuid in uuids:
+        total_mins += get_task_length_in_mins(cursor, uuid)
+    return total_mins
+
+
+def show_this_week_tasks(cursor):
+    thisWeekUUIDs = get_this_week_uuids(cursor)
+    if not thisWeekUUIDs:
+        print("No tasks yet this week.")
+        return
+    this_week = datetime.today().date().isocalendar()[1]
+    this_year = datetime.today().date().isocalendar()[0]
+    total_mins = get_task_lengths_in_mins(cursor, thisWeekUUIDs)
+    hours = total_mins // 60
+    mins = total_mins % 60
+    print(f"Tasks in KW {this_week}/{this_year} ({hours}:{mins} so far):")
     for uuid in thisWeekUUIDs:
         show_task(cursor, uuid, showWeekDay=True)
 
