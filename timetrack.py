@@ -261,15 +261,14 @@ def show_this_week_tasks(cursor):
             """
     )
     tasks = cursor.fetchall()
-    todayTaskUUIDs = [
+    thisWeekUUIDs = [
         x[0]
         for x in tasks
         if datetime.fromtimestamp(x[1]).date().isocalendar()[1] == this_week
         and datetime.fromtimestamp(x[1]).date().isocalendar()[0] == this_year
     ]
-    for uuid in todayTaskUUIDs:
+    for uuid in thisWeekUUIDs:
         show_task(cursor, uuid, showWeekDay=True)
-    pass
 
 
 def add_example_task(cursor):
