@@ -206,6 +206,23 @@ def update_statusbar(cursor):
     with open(STATUSBAR_FILE, "w") as f:
         f.write("Hä?")  # TODO
 
+def show_status(cursor):
+    if not is_task_running(cursor):
+        print("No task currently running!")
+        return
+    cursor.execute("""
+    SELECT * FROM tasks 
+    ORDER BY start_time DESC 
+    LIMIT 1
+    """)
+
+    task = cursor.fetchone()
+    start_time = datetime.fromtimestamp(task[1])
+    diff_mins = int(((datetime.now() - start_time).total_seconds() % 3600) // 60)
+    start_time = start_time.strftime("%-H:%M")
+    print(f"Task \"{task[3]}\" with UUID {task[0]} is running since {start_time} ({diff_mins} mins).")
+
+
 
 def main():
     parser = argparse.ArgumentParser(description="Time logging tool")
@@ -219,6 +236,7 @@ def main():
         "filter", help="Which tasks to show", choices=["all", "week", "today", "unlogged"]
     )
     subparsers.add_parser("log", help="Mark all tasks as logged")
+    subparsers.add_parser("status", help="Show info about currently running task")
     subparsers.add_parser("stop", help="Stop current task")
 
     args = parser.parse_args()
@@ -231,7 +249,7 @@ def main():
             case "stop":
                 stop_task(cursor)
             case "status":
-                raise NotImplementedError
+                show_status(cursor)
             case "log":
                 log_tasks(cursor)
             case "show":
