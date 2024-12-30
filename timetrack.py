@@ -91,13 +91,7 @@ def add_task(cursor, task_data: Dict[str, str | datetime | bool | None]):
 
 
 def is_task_running(cursor):
-    cursor.execute(
-        """
-    SELECT * FROM tasks
-    WHERE end_time IS NULL
-    """
-    )
-
+    cursor.execute("SELECT * FROM tasks WHERE end_time IS NULL")
     return cursor.fetchall() != []
 
 
@@ -185,20 +179,13 @@ def show_unlogged_tasks(cursor):
 
 def show_all_tasks(cursor):
     print("All recorded tasks:")
-    cursor.execute(
-        """
-            SELECT * FROM tasks
-            """
-    )
-    tasks = cursor.fetchall()
+    tasks = get_all_tasks(cursor)
     for task in tasks:
         print(show_task(cursor, task[0], showDate=True))
 
 
 def unlog_tasks(cursor):
-    cursor.execute("""
-                   SELECT * FROM last_logged
-                   """)
+    cursor.execute("SELECT * FROM last_logged")
     lastLoggedUUIDs = [x[0] for x in cursor.fetchall()]
     if not lastLoggedUUIDs:
         print("No history of logging found - only one undo level is supported.")
@@ -215,11 +202,7 @@ def unlog_tasks(cursor):
         )
         task = get_task(cursor, uuid)
         print(f"{task[0]}: {task[3]}")
-    cursor.execute(
-        """
-            DELETE FROM last_logged;
-            """
-    )
+    cursor.execute("DELETE FROM last_logged;")
 
 
 def log_tasks(cursor):
@@ -228,11 +211,7 @@ def log_tasks(cursor):
         print("No unlogged tasks found.")
         return
     print("Marked the following tasks as logged:")
-    cursor.execute(
-        """
-            DELETE FROM last_logged;
-            """
-    )
+    cursor.execute("DELETE FROM last_logged;")
     for uuid in unloggedTaskUUIDs:
         cursor.execute(
             """
@@ -364,9 +343,12 @@ def show_status(cursor):
 def main():
     parser = argparse.ArgumentParser(description="Time logging tool")
     parser.add_argument(
-        '-d', '--debug',
+        "-d",
+        "--debug",
         help="Output debugging info",
-        action="store_const", dest="loglevel", const=logging.DEBUG,
+        action="store_const",
+        dest="loglevel",
+        const=logging.DEBUG,
         default=logging.WARNING,
     )
 
