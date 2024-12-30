@@ -411,7 +411,7 @@ def main():
         default=logging.WARNING,
     )
 
-    subparsers = parser.add_subparsers(dest="command", required=True)
+    subparsers = parser.add_subparsers(dest="command")
 
     start_parser = subparsers.add_parser("start", help="Start a task")
     start_parser.add_argument("task_name", help="Name of the task")
@@ -465,7 +465,7 @@ def main():
             case "print":
                 print_this_week(cursor)
             case _:
-                raise ValueError
+                print_this_week(cursor)
 
         show_db(cursor)
         update_statusbar(cursor)
