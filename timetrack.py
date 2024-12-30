@@ -56,7 +56,8 @@ def is_task_running(cursor):
 
 def start_task(cursor, name: str):
     if is_task_running(cursor):
-        raise ValueError("There's currently a task running!")
+        print("There's currently a task running!")
+        return
 
     task_data = {
         "uuid": get_short_uuid(),
@@ -70,7 +71,8 @@ def start_task(cursor, name: str):
 
 def stop_task(cursor):
     if not is_task_running(cursor):
-        raise ValueError("No task currently running!")
+        print("No task currently running!")
+        return
     cursor.execute("""
     SELECT uuid FROM tasks 
     ORDER BY start_time DESC 
