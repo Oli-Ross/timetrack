@@ -45,4 +45,4 @@ ARCHIVE_DIR = Path("/tmp")
 
 ## TODO 
 
-Integrate with [Harvest API](https://help.getharvest.com/api-v2/introduction/overview/general/)
+Integrate with [Harvest API](https://help.getharvest.com/api-v2/timesheets-api/timesheets/time-entries/#create-a-time-entry-via-duration)
