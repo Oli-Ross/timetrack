@@ -9,12 +9,14 @@ from typing import Dict
 TIMETRACK_DB = "timetrack.db"
 STATUSBAR_FILE = "/tmp/task"
 
+
 def adapt_datetime_epoch(val):
     """Adapt datetime.datetime to Unix timestamp."""
     return int(val.timestamp())
 
 
 sqlite3.register_adapter(datetime, adapt_datetime_epoch)
+
 
 def get_short_uuid():
     return str(uuid.uuid4())[:8]
@@ -90,13 +92,15 @@ def stop_task(cursor):
         (datetime.now().timestamp(), uuid),
     )
 
-def show_task(cursor, uuid, showDate = False, showWeekDay = True):
+
+def show_task(cursor, uuid, showDate=False, showWeekDay=True):
     cursor.execute(
-            """
+        """
             SELECT * FROM tasks
             WHERE uuid = ?;
-            """, (uuid,)
-            )
+            """,
+        (uuid,),
+    )
     task = cursor.fetchone()
     if showDate:
         start_time = datetime.fromtimestamp(task[1]).strftime("%a %-d.%-m.: %-H:%M")
@@ -108,16 +112,18 @@ def show_task(cursor, uuid, showDate = False, showWeekDay = True):
     end_time = datetime.fromtimestamp(task[2]).strftime(" - %-H:%M")
     print(start_time + end_time + f", {task[3]}")
 
+
 def get_unlogged_task_uuids(cursor):
     cursor.execute(
-            """
+        """
             SELECT * FROM tasks
             WHERE is_logged IS FALSE
             """
-            )
+    )
 
     unloggedTaskUUIDs = [task[0] for task in cursor.fetchall() if task[4] != 1]
     return unloggedTaskUUIDs
+
 
 def show_unlogged_tasks(cursor):
     print("Unlogged tasks:")
@@ -128,16 +134,18 @@ def show_unlogged_tasks(cursor):
     for uuid in unloggedTaskUUIDs:
         show_task(cursor, uuid, showDate=True)
 
+
 def show_all_tasks(cursor):
     print("All recorded tasks:")
     cursor.execute(
-            """
+        """
             SELECT * FROM tasks
             """
-            )
+    )
     tasks = cursor.fetchall()
     for task in tasks:
-        show_task(cursor, task[0], showDate = True)
+        show_task(cursor, task[0], showDate=True)
+
 
 def log_tasks(cursor):
     unloggedTaskUUIDs = get_unlogged_task_uuids(cursor)
@@ -152,9 +160,10 @@ def log_tasks(cursor):
         SET is_logged = ?
         WHERE uuid = ?
         """,
-            (True,uuid),
+            (True, uuid),
         )
         show_task(cursor, uuid)
+
 
 def show_db(cursor):
     cursor.execute("SELECT * FROM tasks")
@@ -162,33 +171,43 @@ def show_db(cursor):
     for row in cursor.fetchall():
         print(row)
 
+
 def show_today_tasks(cursor):
     today = datetime.today().date()
     print(today.strftime("Tasks on %a, %-d.%-m.:"))
     cursor.execute(
-            """
+        """
             SELECT * FROM tasks
             """
-            )
+    )
     tasks = cursor.fetchall()
-    todayTaskUUIDs = [x[0] for x in tasks if datetime.fromtimestamp(x[1]).date() == today]
+    todayTaskUUIDs = [
+        x[0] for x in tasks if datetime.fromtimestamp(x[1]).date() == today
+    ]
     for uuid in todayTaskUUIDs:
-        show_task(cursor, uuid, showWeekDay = False)
+        show_task(cursor, uuid, showWeekDay=False)
+
 
 def show_this_week_tasks(cursor):
     this_week = datetime.today().date().isocalendar()[1]
     this_year = datetime.today().date().isocalendar()[0]
     print(f"Tasks in KW {this_week}/{this_year}:")
     cursor.execute(
-            """
+        """
             SELECT * FROM tasks
             """
-            )
+    )
     tasks = cursor.fetchall()
-    todayTaskUUIDs = [x[0] for x in tasks if datetime.fromtimestamp(x[1]).date().isocalendar()[1] == this_week and datetime.fromtimestamp(x[1]).date().isocalendar()[0] == this_year]
+    todayTaskUUIDs = [
+        x[0]
+        for x in tasks
+        if datetime.fromtimestamp(x[1]).date().isocalendar()[1] == this_week
+        and datetime.fromtimestamp(x[1]).date().isocalendar()[0] == this_year
+    ]
     for uuid in todayTaskUUIDs:
-        show_task(cursor, uuid, showWeekDay = True)
+        show_task(cursor, uuid, showWeekDay=True)
     pass
+
 
 def add_example_task(cursor):
     task_data = {
@@ -206,6 +225,7 @@ def update_statusbar(cursor):
     with open(STATUSBAR_FILE, "w") as f:
         f.write("Hä?")  # TODO
 
+
 def show_status(cursor):
     if not is_task_running(cursor):
         print("No task currently running!")
@@ -220,8 +240,9 @@ def show_status(cursor):
     start_time = datetime.fromtimestamp(task[1])
     diff_mins = int(((datetime.now() - start_time).total_seconds() % 3600) // 60)
     start_time = start_time.strftime("%-H:%M")
-    print(f"Task \"{task[3]}\" with UUID {task[0]} is running since {start_time} ({diff_mins} mins).")
-
+    print(
+        f'Task "{task[3]}" with UUID {task[0]} is running since {start_time} ({diff_mins} mins).'
+    )
 
 
 def main():
@@ -233,7 +254,9 @@ def main():
     start_parser.add_argument("task_name", help="Name of the task")
     show_parser = subparsers.add_parser("show", help="Show past tasks")
     show_parser.add_argument(
-        "filter", help="Which tasks to show", choices=["all", "week", "today", "unlogged"]
+        "filter",
+        help="Which tasks to show",
+        choices=["all", "week", "today", "unlogged"],
     )
     subparsers.add_parser("log", help="Mark all tasks as logged")
     subparsers.add_parser("status", help="Show info about currently running task")
