@@ -38,7 +38,7 @@ def setup(cursor):
 def add_task(cursor, task_data: Dict[str, str | datetime | bool | None]):
     cursor.execute(
         """
-    INSERT INTO tasks (uuid, start_time, end_time, name, is_logged) 
+    INSERT INTO tasks (uuid, start_time, end_time, name, is_logged)
     VALUES (:uuid, :start_time, :end_time, :name, :is_logged)
     """,
         task_data,
@@ -48,7 +48,7 @@ def add_task(cursor, task_data: Dict[str, str | datetime | bool | None]):
 def is_task_running(cursor):
     cursor.execute(
         """
-    SELECT * FROM tasks 
+    SELECT * FROM tasks
     WHERE end_time IS NULL
     """
     )
@@ -61,14 +61,16 @@ def start_task(cursor, name: str):
         print("There's currently a task running!")
         return
 
+    uuid = get_short_uuid()
     task_data = {
-        "uuid": get_short_uuid(),
+        "uuid": uuid,
         "start_time": datetime.now().timestamp(),
         "end_time": None,
         "name": name,
         "is_logged": False,
     }
     add_task(cursor, task_data)
+    print(f"Started task with UUID {uuid}.")
 
 
 def stop_task(cursor):
@@ -76,21 +78,27 @@ def stop_task(cursor):
         print("No task currently running!")
         return
     cursor.execute("""
-    SELECT uuid FROM tasks 
-    ORDER BY start_time DESC 
+    SELECT * FROM tasks
+    ORDER BY start_time DESC
     LIMIT 1
     """)
 
-    uuid = cursor.fetchone()[0]
+    task = cursor.fetchone()
+    uuid = task[0]
 
     cursor.execute(
         """
     UPDATE tasks
-    SET end_time = ? 
+    SET end_time = ?
     WHERE uuid = ?
     """,
         (datetime.now().timestamp(), uuid),
     )
+    start_time = datetime.fromtimestamp(task[1])
+    diff_mins = int(
+        ((datetime.now() - start_time).total_seconds() %
+         3600) // 60)
+    print(f"Ended task {uuid} (ran for {diff_mins} mins).")
 
 
 def show_task(cursor, uuid, showDate=False, showWeekDay=True):
@@ -103,7 +111,8 @@ def show_task(cursor, uuid, showDate=False, showWeekDay=True):
     )
     task = cursor.fetchone()
     if showDate:
-        start_time = datetime.fromtimestamp(task[1]).strftime("%a %-d.%-m.: %-H:%M")
+        start_time = datetime.fromtimestamp(
+            task[1]).strftime("%a %-d.%-m.: %-H:%M")
     elif showWeekDay:
         start_time = datetime.fromtimestamp(task[1]).strftime("%a: %-H:%M")
     else:
@@ -231,17 +240,21 @@ def show_status(cursor):
         print("No task currently running!")
         return
     cursor.execute("""
-    SELECT * FROM tasks 
-    ORDER BY start_time DESC 
+    SELECT * FROM tasks
+    ORDER BY start_time DESC
     LIMIT 1
     """)
 
     task = cursor.fetchone()
     start_time = datetime.fromtimestamp(task[1])
-    diff_mins = int(((datetime.now() - start_time).total_seconds() % 3600) // 60)
+    diff_mins = int(
+        ((datetime.now() - start_time).total_seconds() %
+         3600) // 60)
     start_time = start_time.strftime("%-H:%M")
     print(
-        f'Task "{task[3]}" with UUID {task[0]} is running since {start_time} ({diff_mins} mins).'
+        f'Task "{
+            task[3]}" with UUID {
+            task[0]} is running since {start_time} ({diff_mins} mins).'
     )
 
 
@@ -259,7 +272,9 @@ def main():
         choices=["all", "week", "today", "unlogged"],
     )
     subparsers.add_parser("log", help="Mark all tasks as logged")
-    subparsers.add_parser("status", help="Show info about currently running task")
+    subparsers.add_parser(
+        "status",
+        help="Show info about currently running task")
     subparsers.add_parser("stop", help="Stop current task")
 
     args = parser.parse_args()
