@@ -12,7 +12,6 @@ TIMETRACK_DB = "timetrack.db"
 STATUSBAR_FILE = "/tmp/task"
 ARCHIVE_DIR = Path("/tmp")
 
-
 def adapt_datetime_epoch(val):
     """Adapt datetime.datetime to Unix timestamp."""
     return int(val.timestamp())
@@ -339,6 +338,8 @@ def show_status(cursor):
             task[0]} is running since {start_time} ({diff_mins} mins).'
     )
 
+def push_unlogged_tasks(cursor):
+    raise NotImplementedError
 
 def main():
     parser = argparse.ArgumentParser(description="Time logging tool")
@@ -369,6 +370,7 @@ def main():
     subparsers.add_parser("status", help="Show info about currently running task")
     subparsers.add_parser("stop", help="Stop current task")
     subparsers.add_parser("print", help="Print current week in human readable format")
+    subparsers.add_parser("push", help="Upload unlogged tasks to Harvest")
 
     args = parser.parse_args()
     logging.basicConfig(level=args.loglevel)
@@ -386,6 +388,8 @@ def main():
                 unlog_tasks(cursor)
             case "log":
                 log_tasks(cursor)
+            case "push":
+                push_unlogged_tasks(cursor)
             case "show":
                 match args.filter:
                     case "week":
