@@ -3,6 +3,7 @@
 import sqlite3
 import uuid
 import argparse
+import logging
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List
@@ -251,14 +252,14 @@ def log_tasks(cursor):
 
 
 def show_db(cursor):
-    print("\n\n----------------------- Debug output:")
+    logging.debug("----------------------- Debug output:")
     tasks = get_all_tasks(cursor)
     for row in tasks:
-        print(row)
-    print("\n\n----------------------- Last logged:")
+        logging.debug(row)
+    logging.debug("----------------------- Last logged:")
     cursor.execute("SELECT * FROM last_logged")
     for row in cursor.fetchall():
-        print(row)
+        logging.debug(row)
 
 
 def show_today_tasks(cursor):
@@ -361,6 +362,12 @@ def show_status(cursor):
 
 def main():
     parser = argparse.ArgumentParser(description="Time logging tool")
+    parser.add_argument(
+        '-d', '--debug',
+        help="Output debugging info",
+        action="store_const", dest="loglevel", const=logging.DEBUG,
+        default=logging.WARNING,
+    )
 
     subparsers = parser.add_subparsers(dest="command", required=True)
 
@@ -381,6 +388,7 @@ def main():
     subparsers.add_parser("print", help="Print current week in human readable format")
 
     args = parser.parse_args()
+    logging.basicConfig(level=args.loglevel)
 
     with sqlite3.connect(TIMETRACK_DB, isolation_level=None) as connection:
         cursor = setup(connection.cursor())
