@@ -32,6 +32,11 @@ def setup(cursor):
         is_logged BOOLEAN
     )
     """)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS last_logged (
+        uuid TEXT PRIMARY KEY
+    )
+    """)
     return cursor
 
 
@@ -156,12 +161,50 @@ def show_all_tasks(cursor):
         show_task(cursor, task[0], showDate=True)
 
 
+def unlog_tasks(cursor):
+    cursor.execute("""
+                   SELECT * FROM last_logged
+                   """)
+    lastLoggedUUIDs = [x[0] for x in cursor.fetchall()]
+    if not lastLoggedUUIDs:
+        print("No history of logging found - only one undo level is supported.")
+        return
+    print(f"Reset the following tasks' log status:")
+    for uuid in lastLoggedUUIDs:
+        cursor.execute(
+            """
+        UPDATE tasks
+        SET is_logged = ?
+        WHERE uuid = ?
+        """,
+            (False, uuid),
+        )
+        cursor.execute(
+            """
+                SELECT * FROM tasks
+                WHERE uuid = ?
+                """, (uuid,)
+        )
+        task = cursor.fetchone()
+        print(f"{task[0]}: {task[3]}")
+    cursor.execute(
+        """
+            DELETE FROM last_logged;
+            """
+    )
+
+
 def log_tasks(cursor):
     unloggedTaskUUIDs = get_unlogged_task_uuids(cursor)
     if not unloggedTaskUUIDs:
         print("No unlogged tasks found.")
         return
     print("Marked the following tasks as logged:")
+    cursor.execute(
+        """
+            DELETE FROM last_logged;
+            """
+    )
     for uuid in unloggedTaskUUIDs:
         cursor.execute(
             """
@@ -172,11 +215,22 @@ def log_tasks(cursor):
             (True, uuid),
         )
         show_task(cursor, uuid)
+        cursor.execute(
+            """
+                INSERT INTO last_logged
+                VALUES (?)
+                """,
+            (uuid,)
+        )
 
 
 def show_db(cursor):
-    cursor.execute("SELECT * FROM tasks")
     print("\n\n----------------------- Debug output:")
+    cursor.execute("SELECT * FROM tasks")
+    for row in cursor.fetchall():
+        print(row)
+    print("\n\n----------------------- Last logged:")
+    cursor.execute("SELECT * FROM last_logged")
     for row in cursor.fetchall():
         print(row)
 
@@ -273,6 +327,9 @@ def main():
     )
     subparsers.add_parser("log", help="Mark all tasks as logged")
     subparsers.add_parser(
+        "unlog",
+        help="Undo the last operation that marked tasks logged.")
+    subparsers.add_parser(
         "status",
         help="Show info about currently running task")
     subparsers.add_parser("stop", help="Stop current task")
@@ -288,6 +345,8 @@ def main():
                 stop_task(cursor)
             case "status":
                 show_status(cursor)
+            case "unlog":
+                unlog_tasks(cursor)
             case "log":
                 log_tasks(cursor)
             case "show":
