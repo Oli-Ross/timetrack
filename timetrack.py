@@ -42,6 +42,43 @@ def setup(cursor):
     return cursor
 
 
+def get_this_week_uuids(cursor):
+    this_week = datetime.today().date().isocalendar()[1]
+    this_year = datetime.today().date().isocalendar()[0]
+    tasks = get_all_tasks(cursor)
+    thisWeekUUIDs = [
+        x[0]
+        for x in tasks
+        if datetime.fromtimestamp(x[1]).date().isocalendar()[1] == this_week
+        and datetime.fromtimestamp(x[1]).date().isocalendar()[0] == this_year
+    ]
+    return thisWeekUUIDs
+
+
+def get_all_tasks(cursor) -> List[List[str]]:
+    cursor.execute("SELECT * FROM tasks")
+    return cursor.fetchall()
+
+
+def get_task(cursor, uuid) -> List[str]:
+    cursor.execute("SELECT * FROM tasks WHERE uuid = ?", (uuid,))
+    return cursor.fetchone()
+
+
+def get_task_length_in_mins(cursor, uuid):
+    task = get_task(cursor, uuid)
+    if not task[2]:
+        return 0
+    return int((task[2] - task[1]) / 60)
+
+
+def get_task_lengths_in_mins(cursor, uuids: List[str]):
+    total_mins = 0
+    for uuid in uuids:
+        total_mins += get_task_length_in_mins(cursor, uuid)
+    return total_mins
+
+
 def add_task(cursor, task_data: Dict[str, str | datetime | bool | None]):
     cursor.execute(
         """
@@ -102,17 +139,14 @@ def stop_task(cursor):
         (datetime.now().timestamp(), uuid),
     )
     start_time = datetime.fromtimestamp(task[1])
-    diff_mins = int(
-        ((datetime.now() - start_time).total_seconds() %
-         3600) // 60)
+    diff_mins = int(((datetime.now() - start_time).total_seconds() % 3600) // 60)
     print(f"Ended task {uuid} (ran for {diff_mins} mins).")
 
 
 def show_task(cursor, uuid, showDate=False, showWeekDay=True):
     task = get_task(cursor, uuid)
     if showDate:
-        start_time = datetime.fromtimestamp(
-            task[1]).strftime("%a %-d.%-m.: %-H:%M")
+        start_time = datetime.fromtimestamp(task[1]).strftime("%a %-d.%-m.: %-H:%M")
     elif showWeekDay:
         start_time = datetime.fromtimestamp(task[1]).strftime("%a: %-H:%M")
     else:
@@ -212,7 +246,7 @@ def log_tasks(cursor):
                 INSERT INTO last_logged
                 VALUES (?)
                 """,
-            (uuid,)
+            (uuid,),
         )
 
 
@@ -241,41 +275,6 @@ def show_today_tasks(cursor):
         print(show_task(cursor, uuid, showWeekDay=False))
 
 
-def get_this_week_uuids(cursor):
-    this_week = datetime.today().date().isocalendar()[1]
-    this_year = datetime.today().date().isocalendar()[0]
-    tasks = get_all_tasks(cursor)
-    thisWeekUUIDs = [
-        x[0]
-        for x in tasks
-        if datetime.fromtimestamp(x[1]).date().isocalendar()[1] == this_week
-        and datetime.fromtimestamp(x[1]).date().isocalendar()[0] == this_year
-    ]
-    return thisWeekUUIDs
-
-def get_all_tasks(cursor) -> List[List[str]]:
-    cursor.execute("SELECT * FROM tasks")
-    return cursor.fetchall()
-
-def get_task(cursor, uuid) -> List[str]:
-    cursor.execute("SELECT * FROM tasks WHERE uuid = ?", (uuid,))
-    return cursor.fetchone()
-
-
-def get_task_length_in_mins(cursor, uuid):
-    task = get_task(cursor, uuid)
-    if not task[2]:
-        return 0
-    return int((task[2] - task[1]) / 60)
-
-
-def get_task_lengths_in_mins(cursor, uuids: List[str]):
-    total_mins = 0
-    for uuid in uuids:
-        total_mins += get_task_length_in_mins(cursor, uuid)
-    return total_mins
-
-
 def show_this_week_tasks(cursor):
     thisWeekUUIDs = get_this_week_uuids(cursor)
     if not thisWeekUUIDs:
@@ -289,7 +288,6 @@ def show_this_week_tasks(cursor):
     print(f"Tasks in KW {this_week}/{this_year} ({hours}:{mins} so far):")
     for uuid in thisWeekUUIDs:
         print(show_task(cursor, uuid, showWeekDay=True))
-
 
 
 def update_statusbar(cursor):
@@ -352,9 +350,7 @@ def show_status(cursor):
 
     task = cursor.fetchone()
     start_time = datetime.fromtimestamp(task[1])
-    diff_mins = int(
-        ((datetime.now() - start_time).total_seconds() %
-         3600) // 60)
+    diff_mins = int(((datetime.now() - start_time).total_seconds() % 3600) // 60)
     start_time = start_time.strftime("%-H:%M")
     print(
         f'Task "{
@@ -378,15 +374,11 @@ def main():
     )
     subparsers.add_parser("log", help="Mark all tasks as logged")
     subparsers.add_parser(
-        "unlog",
-        help="Undo the last operation that marked tasks logged.")
-    subparsers.add_parser(
-        "status",
-        help="Show info about currently running task")
+        "unlog", help="Undo the last operation that marked tasks logged."
+    )
+    subparsers.add_parser("status", help="Show info about currently running task")
     subparsers.add_parser("stop", help="Stop current task")
-    subparsers.add_parser(
-        "print",
-        help="Print current week in human readable format")
+    subparsers.add_parser("print", help="Print current week in human readable format")
 
     args = parser.parse_args()
 
