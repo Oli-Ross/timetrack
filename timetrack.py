@@ -88,9 +88,50 @@ def stop_task(cursor):
         (datetime.now().timestamp(), uuid),
     )
 
+def show_task(cursor, uuid):
+    cursor.execute(
+            """
+            SELECT * FROM tasks
+            WHERE uuid = ?;
+            """, (uuid,)
+            )
+    task = cursor.fetchone()
+    start_time = datetime.fromtimestamp(task[1]).strftime("%a: %-H:%M")
+    end_time = datetime.fromtimestamp(task[2]).strftime(" - %-H:%M")
+    print(start_time + end_time + f", {task[3]}")
+
+def get_unlogged_task_uuids(cursor):
+    cursor.execute(
+            """
+            SELECT * FROM tasks
+            WHERE is_logged IS FALSE
+            """
+            )
+
+    unloggedTaskUUIDs = [task[0] for task in cursor.fetchall() if task[4] != 1]
+    return unloggedTaskUUIDs
+
+
+def log_tasks(cursor):
+    unloggedTaskUUIDs = get_unlogged_task_uuids(cursor)
+    if not unloggedTaskUUIDs:
+        print("No unlogged tasks found.")
+        return
+    print("Marked the following tasks as logged:")
+    for uuid in unloggedTaskUUIDs:
+        cursor.execute(
+            """
+        UPDATE tasks
+        SET is_logged = ?
+        WHERE uuid = ?
+        """,
+            (True,uuid),
+        )
+        show_task(cursor, uuid)
 
 def show_db(cursor):
     cursor.execute("SELECT * FROM tasks")
+    print("\n\n----------------------- Debug output:")
     for row in cursor.fetchall():
         print(row)
 
@@ -138,7 +179,7 @@ def main():
             case "status":
                 raise NotImplementedError
             case "log":
-                raise NotImplementedError
+                log_tasks(cursor)
             case "show":
                 raise NotImplementedError
             case _:
