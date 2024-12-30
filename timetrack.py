@@ -88,7 +88,7 @@ def stop_task(cursor):
         (datetime.now().timestamp(), uuid),
     )
 
-def show_task(cursor, uuid):
+def show_task(cursor, uuid, showDate = False):
     cursor.execute(
             """
             SELECT * FROM tasks
@@ -96,7 +96,10 @@ def show_task(cursor, uuid):
             """, (uuid,)
             )
     task = cursor.fetchone()
-    start_time = datetime.fromtimestamp(task[1]).strftime("%a: %-H:%M")
+    if showDate:
+        start_time = datetime.fromtimestamp(task[1]).strftime("%a %-d.%-m.: %-H:%M")
+    else:
+        start_time = datetime.fromtimestamp(task[1]).strftime("%a: %-H:%M")
     end_time = datetime.fromtimestamp(task[2]).strftime(" - %-H:%M")
     print(start_time + end_time + f", {task[3]}")
 
@@ -111,6 +114,25 @@ def get_unlogged_task_uuids(cursor):
     unloggedTaskUUIDs = [task[0] for task in cursor.fetchall() if task[4] != 1]
     return unloggedTaskUUIDs
 
+def show_unlogged_tasks(cursor):
+    print("Unlogged tasks:")
+    unloggedTaskUUIDs = get_unlogged_task_uuids(cursor)
+    if not unloggedTaskUUIDs:
+        print("No unlogged tasks found.")
+        return
+    for uuid in unloggedTaskUUIDs:
+        show_task(cursor, uuid, showDate=True)
+
+def show_all_tasks(cursor):
+    print("All recorded tasks:")
+    cursor.execute(
+            """
+            SELECT * FROM tasks
+            """
+            )
+    tasks = cursor.fetchall()
+    for task in tasks:
+        show_task(cursor, task[0], showDate = True)
 
 def log_tasks(cursor):
     unloggedTaskUUIDs = get_unlogged_task_uuids(cursor)
@@ -162,7 +184,7 @@ def main():
     start_parser.add_argument("task_name", help="Name of the task")
     show_parser = subparsers.add_parser("show", help="Show past tasks")
     show_parser.add_argument(
-        "filter", help="Which tasks to show", choices=["week", "day", "unlogged"]
+        "filter", help="Which tasks to show", choices=["all", "week", "day", "unlogged"]
     )
     subparsers.add_parser("log", help="Mark all tasks as logged")
     subparsers.add_parser("stop", help="Stop current task")
@@ -181,7 +203,15 @@ def main():
             case "log":
                 log_tasks(cursor)
             case "show":
-                raise NotImplementedError
+                match args.filter:
+                    case "week":
+                        raise NotImplementedError
+                    case "day":
+                        raise NotImplementedError
+                    case "unlogged":
+                        show_unlogged_tasks(cursor)
+                    case "all":
+                        show_all_tasks(cursor)
             case _:
                 raise ValueError
 
