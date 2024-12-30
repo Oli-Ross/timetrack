@@ -129,7 +129,7 @@ def show_task(cursor, uuid, showDate=False, showWeekDay=True):
         end_time = datetime.fromtimestamp(task[2]).strftime(" - %-H:%M")
     else:
         end_time = " - ?"
-    print(start_time + end_time + f", {task[3]}")
+    return start_time + end_time + f", {task[3]}"
 
 
 def get_unlogged_task_uuids(cursor):
@@ -151,7 +151,7 @@ def show_unlogged_tasks(cursor):
         print("No unlogged tasks found.")
         return
     for uuid in unloggedTaskUUIDs:
-        show_task(cursor, uuid, showDate=True)
+        print(show_task(cursor, uuid, showDate=True))
 
 
 def show_all_tasks(cursor):
@@ -163,7 +163,7 @@ def show_all_tasks(cursor):
     )
     tasks = cursor.fetchall()
     for task in tasks:
-        show_task(cursor, task[0], showDate=True)
+        print(show_task(cursor, task[0], showDate=True))
 
 
 def unlog_tasks(cursor):
@@ -219,7 +219,7 @@ def log_tasks(cursor):
         """,
             (True, uuid),
         )
-        show_task(cursor, uuid)
+        print(show_task(cursor, uuid))
         cursor.execute(
             """
                 INSERT INTO last_logged
@@ -253,7 +253,7 @@ def show_today_tasks(cursor):
         x[0] for x in tasks if datetime.fromtimestamp(x[1]).date() == today
     ]
     for uuid in todayTaskUUIDs:
-        show_task(cursor, uuid, showWeekDay=False)
+        print(show_task(cursor, uuid, showWeekDay=False))
 
 
 def get_this_week_uuids(cursor):
@@ -301,7 +301,7 @@ def show_this_week_tasks(cursor):
     mins = total_mins % 60
     print(f"Tasks in KW {this_week}/{this_year} ({hours}:{mins} so far):")
     for uuid in thisWeekUUIDs:
-        show_task(cursor, uuid, showWeekDay=True)
+        print(show_task(cursor, uuid, showWeekDay=True))
 
 
 def add_example_task(cursor):
@@ -317,8 +317,56 @@ def add_example_task(cursor):
 
 
 def update_statusbar(cursor):
+    if not is_task_running(cursor):
+        output = ""
+    else:
+        cursor.execute("""
+        SELECT * FROM tasks
+        ORDER BY start_time DESC
+        LIMIT 1
+        """)
+        task = cursor.fetchone()
+        name = task[3]
+        start_time = datetime.fromtimestamp(task[1]).strftime("%-H:%M")
+        output = name + " since " + start_time
     with open(STATUSBAR_FILE, "w") as f:
-        f.write("Hä?")  # TODO
+        f.write(output)
+
+
+def print_this_week(cursor):
+    output = ""
+    thisWeekUUIDs = get_this_week_uuids(cursor)
+    tasks = []
+    for uuid in thisWeekUUIDs:
+        cursor.execute("""
+                       SELECT * FROM tasks
+                       WHERE uuid = ?
+                       """, (uuid,)
+                       )
+        task = cursor.fetchone()
+        tasks.append(task)
+    this_week = str(datetime.today().date().isocalendar()[1])
+    this_year = str(datetime.today().date().isocalendar()[0])
+    total_mins = get_task_lengths_in_mins(cursor, thisWeekUUIDs)
+    hours = total_mins // 60
+    mins = total_mins % 60
+    if len(this_week) == 1:
+        this_week: str = "0" + this_week
+    output += f"# KW {this_week} / {this_year} ({hours}:{mins} spent)\n"
+
+    current_weekday = ""
+    for task in tasks:
+        start = datetime.fromtimestamp(task[1])
+        if start.strftime("%a") != current_weekday:
+            weekday_heading = start.strftime("\n## %a %-d.%-m.\n\n")
+            current_weekday = start.strftime("%a")
+            output += weekday_heading
+        output += show_task(cursor, task[0], showWeekDay=False) + "\n"
+
+    CURRENT_WEEK_FILE = CURRENT_WEEK_DIR / f"KW_{this_week}.md"
+    with open(CURRENT_WEEK_FILE, "w") as f:
+        f.write(output)
+    print(output)
 
 
 def show_status(cursor):
@@ -365,6 +413,9 @@ def main():
         "status",
         help="Show info about currently running task")
     subparsers.add_parser("stop", help="Stop current task")
+    subparsers.add_parser(
+        "print",
+        help="Print current week in human readable format")
 
     args = parser.parse_args()
 
@@ -391,11 +442,13 @@ def main():
                         show_unlogged_tasks(cursor)
                     case "all":
                         show_all_tasks(cursor)
+            case "print":
+                print_this_week(cursor)
             case _:
                 raise ValueError
 
-    show_db(cursor)
-    update_statusbar(cursor)
+        #  show_db(cursor)
+        update_statusbar(cursor)
 
 
 if __name__ == "__main__":
