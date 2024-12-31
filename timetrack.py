@@ -7,6 +7,7 @@ import logging
 import os
 import json
 import urllib.request
+import urllib.parse
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List
@@ -356,7 +357,7 @@ def push_unlogged_tasks(cursor):
             "project_id": project_id,
             "task_id": task_id,
         }
-        print(data)
+        data = urllib.parse.urlencode(data).encode("ascii")
 
         EMAIL = os.environ.get("EMAIL")
         HARVEST_TOKEN = os.environ.get("HARVEST_TOKEN")
