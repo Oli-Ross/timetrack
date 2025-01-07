@@ -11,6 +11,8 @@ chmod +x ./timetrack.py
 sudo ln -s "$(pwd)/timetrack.py" /usr/local/bin/task
 ```
 
+If you want to use `task assign` to interactively assign Harvest projects/tasks, you need [fzf](https://github.com/junegunn/fzf).
+
 ## CLI interface
 
 - `task status`: Show the currently running task: start time, duration, name
@@ -18,6 +20,7 @@ sudo ln -s "$(pwd)/timetrack.py" /usr/local/bin/task
 - `task rename NAME`: Rename last task to `NAME`
 - `task next NAME`: Start a new task with the name `NAME`, end any running tasks
 - `task extend`: Set the last stopped task to running
+- `task assign`: Interactively select a Harvest project + task to assign to the latest task. Requires `fzf`
 - `task stop`: End the current task
 - `task abort`: Discard the current task
 - `task log`: Mark all tasks logged up to including the last task that was ended and show all tasks who's status changed

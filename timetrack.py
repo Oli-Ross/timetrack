@@ -2,6 +2,7 @@
 
 import sqlite3
 import argparse
+import subprocess
 import logging
 from datetime import datetime
 from pathlib import Path
@@ -36,7 +37,9 @@ def setup(cursor):
         start_time TIMESTAMP,
         end_time TIMESTAMP,
         name TEXT,
-        is_logged BOOLEAN
+        is_logged BOOLEAN,
+        taskId TEXT,
+        projectId TEXT
     )
     """)
     cursor.execute("""
@@ -89,8 +92,8 @@ def get_task_lengths_in_mins(cursor, uuids: List[str]):
 def add_task(cursor, task_data: Dict[str, str | datetime | bool | None]):
     cursor.execute(
         """
-    INSERT INTO tasks (uuid, start_time, end_time, name, is_logged)
-    VALUES (:uuid, :start_time, :end_time, :name, :is_logged)
+    INSERT INTO tasks (uuid, start_time, end_time, name, is_logged, taskId, projectId)
+    VALUES (:uuid, :start_time, :end_time, :name, :is_logged, :taskId, :projectId)
     """,
         task_data,
     )
@@ -129,6 +132,8 @@ def start_task(cursor, name: str):
         "end_time": None,
         "name": name,
         "is_logged": False,
+        "taskId": None,
+        "projectId": None,
     }
     add_task(cursor, task_data)
     print(f"Started task with UUID {uuid}.")
@@ -418,6 +423,101 @@ def show_status(cursor):
     )
 
 
+def assign_task(cursor):
+    import os
+    import json
+    import urllib.request
+    import urllib.parse
+
+    EMAIL = os.environ.get("EMAIL")
+    HARVEST_TOKEN = os.environ.get("HARVEST_TOKEN")
+    HARVEST_ACCOUNT_ID = os.environ.get("HARVEST_ACCOUNT_ID")
+    if None in (EMAIL, HARVEST_ACCOUNT_ID, HARVEST_TOKEN):
+        print("Environment variable for Harvest upload is missing.")
+        print("Aborting upload.")
+        return
+
+    url = "https://api.harvestapp.com/v2/users/me/project_assignments"
+    headers = {
+        "User-Agent": f"MyIntegration ({EMAIL})",
+        "Authorization": "Bearer " + str(HARVEST_TOKEN),
+        "Harvest-Account-Id": str(HARVEST_ACCOUNT_ID),
+    }
+
+    request = urllib.request.Request(url=url, headers=headers)
+    with urllib.request.urlopen(request, timeout=5) as response:
+        responseCode = response.getcode()
+        if responseCode != 200:
+            raise Exception("Request to Harvest failed.")
+
+        responseBody = response.read().decode("utf-8")
+        jsonResponse = json.loads(responseBody)
+
+    clients = {}
+    for project in jsonResponse["project_assignments"]:
+        clientId = str(project["client"]["id"])
+        projectId = str(project["project"]["id"])
+        if not clientId in clients:
+            clients[clientId] = project["client"]["name"], {}
+        projects = clients[clientId][1]
+        if not projectId in projects:
+            projects[projectId] = project["project"]["name"], {}
+        for task in project["task_assignments"]:
+            taskId = str(task["task"]["id"])
+            if not taskId in projects[projectId][1]:
+                projects[projectId][1][taskId] = task["task"]["name"]
+    clientName = subprocess.run(
+        ["fzf"],
+        input="\n".join([x[0] for x in clients.values()]),
+        text=True,
+        capture_output=True,
+    ).stdout.strip()
+    clientId = next(key for key, val in clients.items() if val[0] == clientName)
+    projects = clients[clientId][1]
+    projectName = subprocess.run(
+        ["fzf"],
+        input="\n".join([x[0] for x in projects.values()]),
+        text=True,
+        capture_output=True,
+    ).stdout.strip()
+    projectId = next(key for key, val in projects.items() if val[0] == projectName)
+    tasks = projects[projectId][1]
+    taskName = subprocess.run(
+        ["fzf"],
+        input="\n".join(tasks.values()),
+        text=True,
+        capture_output=True,
+    ).stdout.strip()
+    taskId = next(key for key, val in tasks.items() if val == taskName)
+
+    cursor.execute("""
+    SELECT * FROM tasks
+    ORDER BY start_time DESC
+    LIMIT 1
+    """)
+
+    task = cursor.fetchone()
+    uuid = task[0]
+    cursor.execute(
+        """
+    UPDATE tasks
+    SET projectId = ?
+    WHERE uuid = ?
+    """,
+        (projectId, uuid),
+    )
+    cursor.execute(
+        """
+    UPDATE tasks
+    SET taskId = ?
+    WHERE uuid = ?
+    """,
+        (taskId, uuid),
+    )
+
+    print(f'Attributed task "{task[3]}" to {clientName}/{projectName}/{taskName}.')
+
+
 def push_unlogged_tasks(cursor):
     import os
     import json
@@ -435,8 +535,21 @@ def push_unlogged_tasks(cursor):
         spent_date = datetime.fromtimestamp(task[1]).strftime("%Y-%m-%d")
         hours = f"{time_spent:.2f}"
         notes = task[3]
-        project_id = PROJECT_ID
-        task_id = TASK_ID
+        defaultUsed = False
+        if task[5]:
+            task_id = task[6]
+        else:
+            task_id = TASK_ID
+            defaultUsed = True
+        if task[6]:
+            project_id = task[6]
+        else:
+            project_id = PROJECT_ID
+            defaultUsed = True
+        if defaultUsed:
+            print(
+                f'Task "{task[3]}" with UUID {uuid} has missing task info + is pushed as default task.'
+            )
 
         data = {
             "spent_date": spent_date,
@@ -512,6 +625,7 @@ def main():
     )
     subparsers.add_parser("status", help="Show info about currently running task")
     subparsers.add_parser("stop", help="Stop current task")
+    subparsers.add_parser("assign", help="Assign last task to Harvest task")
     subparsers.add_parser("abort", help="Abort current task")
     subparsers.add_parser("extend", help="Set the last completed task to running")
     subparsers.add_parser("print", help="Print current week in human readable format")
@@ -553,6 +667,8 @@ def main():
                         show_all_tasks(cursor)
             case "print":
                 print_this_week(cursor)
+            case "assign":
+                assign_task(cursor)
             case _:
                 print_this_week(cursor)
 
