@@ -192,13 +192,13 @@ def show_task(cursor, uuid, showDate=False, showWeekDay=True):
     elif showWeekDay:
         start_time = datetime.fromtimestamp(task[1]).strftime("%a: %-H:%M")
     else:
-        start_time = datetime.fromtimestamp(task[1]).strftime("%-H:%M")
+        start_time = datetime.fromtimestamp(task[1]).strftime("%H:%M")
 
     if task[2]:
         end_time = datetime.fromtimestamp(task[2]).strftime(" - %-H:%M")
     else:
         end_time = " - ?    "
-    return start_time + end_time + f", {task[3]}"
+    return start_time + end_time + f" {task[3]}"
 
 
 def get_unlogged_task_uuids(cursor):
@@ -343,7 +343,10 @@ def print_this_week(cursor):
             weekday_heading = start.strftime("\n## %a %-d.%-m.\n\n")
             current_weekday = start.strftime("%a")
             output += weekday_heading
-        output += show_task(cursor, task[0], showWeekDay=False) + "\n"
+        output += show_task(cursor, task[0], showWeekDay=False)
+        if task[4] == 0:
+            output += "*"
+        output += "\n"
 
     CURRENT_WEEK_FILE = ARCHIVE_DIR / f"KW_{this_week}.md"
     with open(CURRENT_WEEK_FILE, "w") as f:
