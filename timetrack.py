@@ -132,6 +132,31 @@ def start_task(cursor, name: str):
     print(f"Started task with UUID {uuid}.")
 
 
+def extend_task(cursor):
+    if is_task_running(cursor):
+        print("Task currently running!")
+        return
+
+    cursor.execute("""
+    SELECT * FROM tasks
+    ORDER BY start_time DESC
+    LIMIT 1
+    """)
+
+    task = cursor.fetchone()
+    uuid = task[0]
+
+    cursor.execute(
+        """
+    UPDATE tasks
+    SET end_time = ?
+    WHERE uuid = ?
+    """,
+        (None, uuid),
+    )
+    print(f'Set task "{task[3]}" {uuid} to running.')
+
+
 def stop_task(cursor):
     if not is_task_running(cursor):
         print("No task currently running!")
@@ -435,6 +460,7 @@ def main():
     )
     subparsers.add_parser("status", help="Show info about currently running task")
     subparsers.add_parser("stop", help="Stop current task")
+    subparsers.add_parser("extend", help="Set the last completed task to running")
     subparsers.add_parser("print", help="Print current week in human readable format")
     subparsers.add_parser("push", help="Upload unlogged tasks to Harvest")
 
@@ -448,6 +474,8 @@ def main():
                 start_task(cursor, args.task_name)
             case "next":
                 next_task(cursor, args.task_name)
+            case "extend":
+                extend_task(cursor)
             case "stop":
                 stop_task(cursor)
             case "status":
