@@ -367,7 +367,7 @@ def push_unlogged_tasks(cursor):
             print("Aborting upload.")
             return
 
-        url = "https://api.harvestapp.com/v2/time_entries"
+        url = "https://api.harvestapp.com/api/v2/time_entries"
         headers = {
             "User-Agent": f"MyIntegration ({EMAIL})",
             "Authorization": "Bearer " + str(HARVEST_TOKEN),
