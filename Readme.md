@@ -62,9 +62,11 @@ Also, there are 2 more config variables that are currently hardcoded:
 PROJECT_ID = 1
 TASK_ID = 1
 ```
-These IDs define to which project on Harvest the unlogged tasks are uploaded to.
+These IDs define to which default project on Harvest the unlogged tasks are uploaded to, if they have not been assigned 
+properly using `task assign`.
 
 ## Internal architecture
 
 - SQLite database
 - Each task has unique UUID
+- [Harvest API](https://help.getharvest.com/api-v2/) for upload
