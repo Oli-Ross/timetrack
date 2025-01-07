@@ -447,7 +447,7 @@ def main():
             case "start":
                 start_task(cursor, args.task_name)
             case "next":
-                start_task(cursor, args.task_name)
+                next_task(cursor, args.task_name)
             case "stop":
                 stop_task(cursor)
             case "status":
