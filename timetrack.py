@@ -72,9 +72,11 @@ def get_task(cursor, uuid) -> List[str]:
 
 def get_task_length_in_mins(cursor, uuid):
     task = get_task(cursor, uuid)
-    if not task[2]:
-        return 0
-    return int((float(task[2]) - float(task[1])) / 60)
+    if task[2]:
+        end_time = task[2]
+    else:
+        end_time = datetime.now().timestamp()
+    return int((float(end_time) - float(task[1])) / 60)
 
 
 def get_task_lengths_in_mins(cursor, uuids: List[str]):
