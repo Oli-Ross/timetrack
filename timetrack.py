@@ -99,6 +99,22 @@ def is_task_running(cursor):
     return cursor.fetchall() != []
 
 
+def next_task(cursor, name: str):
+    if is_task_running(cursor):
+        stop_task(cursor)
+
+    uuid = get_short_uuid()
+    task_data = {
+        "uuid": uuid,
+        "start_time": datetime.now().timestamp(),
+        "end_time": None,
+        "name": name,
+        "is_logged": False,
+    }
+    add_task(cursor, task_data)
+    print(f"Started task with UUID {uuid}.")
+
+
 def start_task(cursor, name: str):
     if is_task_running(cursor):
         print("There's currently a task running!")
@@ -402,7 +418,11 @@ def main():
     subparsers = parser.add_subparsers(dest="command")
 
     start_parser = subparsers.add_parser("start", help="Start a task")
+    next_parser = subparsers.add_parser(
+        "next", help="Start a task, stop the previous one."
+    )
     start_parser.add_argument("task_name", help="Name of the task")
+    next_parser.add_argument("task_name", help="Name of the task")
     show_parser = subparsers.add_parser("show", help="Show past tasks")
     show_parser.add_argument(
         "filter",
@@ -425,6 +445,8 @@ def main():
         cursor = setup(connection.cursor())
         match args.command:
             case "start":
+                start_task(cursor, args.task_name)
+            case "next":
                 start_task(cursor, args.task_name)
             case "stop":
                 stop_task(cursor)

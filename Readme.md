@@ -15,6 +15,7 @@ sudo ln -s "$(pwd)/timetrack.py" /usr/local/bin/task
 
 - `task status`: Show the currently running task: start time, duration, name
 - `task start NAME`: Start a new task with the name `NAME`, abort with error if one is running
+- `task next NAME`: Start a new task with the name `NAME`, end any running tasks
 - `task stop`: End the current task
 - `task log`: Mark all tasks logged up to including the last task that was ended and show all tasks who's status changed
 - `task unlog`: Undo the last call to `task log`
