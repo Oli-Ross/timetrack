@@ -385,6 +385,8 @@ def push_unlogged_tasks(cursor):
                     f"Request failed: Couldn't push task {uuid} to Harvest.")
 
     print("Successfully pushed all unlogged tasks to Harvest.")
+    log_tasks(cursor)
+    print("Successfully logged all pushed tasks.")
 
 
 def main():
