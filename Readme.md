@@ -25,6 +25,8 @@ sudo ln -s "$(pwd)/timetrack.py" /usr/local/bin/task
 On each `task` invocation: 
 - Print the current task + time running to a file for the OS statusbar
 
+Using `-d` will dump the entire database for debugging purposes.
+
 ## Config
 
 The following config parameters can be edited in the source directly:
@@ -59,7 +61,3 @@ These IDs define to which project on Harvest the unlogged tasks are uploaded to.
 
 - SQLite database
 - Each task has unique UUID
-
-## TODO 
-
-Test Harvest integration.
