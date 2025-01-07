@@ -361,7 +361,7 @@ def push_unlogged_tasks(cursor):
 
         EMAIL = os.environ.get("EMAIL")
         HARVEST_TOKEN = os.environ.get("HARVEST_TOKEN")
-        HARVEST_ACCOUNT_ID = os.environ.get("HARVEST_TOKEN")
+        HARVEST_ACCOUNT_ID = os.environ.get("HARVEST_ACCOUNT_ID")
         if None in (EMAIL, HARVEST_ACCOUNT_ID, HARVEST_TOKEN):
             print("Environment variable for Harvest upload is missing.")
             print("Aborting upload.")
