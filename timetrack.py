@@ -159,6 +159,51 @@ def extend_task(cursor):
     print(f'Set task "{task[3]}" {uuid} to running.')
 
 
+def rename_task(cursor, task_name):
+    cursor.execute("""
+    SELECT * FROM tasks
+    ORDER BY start_time DESC
+    LIMIT 1
+    """)
+
+    task = cursor.fetchone()
+    uuid = task[0]
+    old_name = task[3]
+
+    cursor.execute(
+        """
+    UPDATE tasks
+    SET name = ?
+    WHERE uuid = ?
+    """,
+        (task_name, uuid),
+    )
+    print(f'Renamed "{old_name}" to "{task_name}"')
+
+
+def abort_task(cursor):
+    if not is_task_running(cursor):
+        print("No task currently running!")
+        return
+    cursor.execute("""
+    SELECT * FROM tasks
+    ORDER BY start_time DESC
+    LIMIT 1
+    """)
+
+    task = cursor.fetchone()
+    uuid = task[0]
+
+    cursor.execute(
+        """
+    DELETE FROM tasks
+    WHERE uuid = ?
+    """,
+        (uuid,),
+    )
+    print(f'Aborted task "{task[3]}".')
+
+
 def stop_task(cursor):
     if not is_task_running(cursor):
         print("No task currently running!")
@@ -453,6 +498,8 @@ def main():
     )
     start_parser.add_argument("task_name", help="Name of the task")
     next_parser.add_argument("task_name", help="Name of the task")
+    rename_parser = subparsers.add_parser("rename", help="Rename last task")
+    rename_parser.add_argument("task_name", help="New name of the task")
     show_parser = subparsers.add_parser("show", help="Show past tasks")
     show_parser.add_argument(
         "filter",
@@ -465,6 +512,7 @@ def main():
     )
     subparsers.add_parser("status", help="Show info about currently running task")
     subparsers.add_parser("stop", help="Stop current task")
+    subparsers.add_parser("abort", help="Abort current task")
     subparsers.add_parser("extend", help="Set the last completed task to running")
     subparsers.add_parser("print", help="Print current week in human readable format")
     subparsers.add_parser("push", help="Upload unlogged tasks to Harvest")
@@ -483,6 +531,10 @@ def main():
                 extend_task(cursor)
             case "stop":
                 stop_task(cursor)
+            case "abort":
+                abort_task(cursor)
+            case "rename":
+                rename_task(cursor, args.task_name)
             case "status":
                 show_status(cursor)
             case "unlog":
