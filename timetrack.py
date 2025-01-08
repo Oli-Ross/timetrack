@@ -242,12 +242,12 @@ def show_task(cursor, uuid, showDate=False, showWeekDay=True):
     if showDate:
         start_time = datetime.fromtimestamp(task[1]).strftime("%a %-d.%-m.: %-H:%M")
     elif showWeekDay:
-        start_time = datetime.fromtimestamp(task[1]).strftime("%a: %-H:%M")
+        start_time = datetime.fromtimestamp(task[1]).strftime("%a: %H:%M")
     else:
         start_time = datetime.fromtimestamp(task[1]).strftime("%H:%M")
 
     if task[2]:
-        end_time = datetime.fromtimestamp(task[2]).strftime(" - %-H:%M")
+        end_time = datetime.fromtimestamp(task[2]).strftime(" - %H:%M")
     else:
         end_time = " - ?    "
     return start_time + end_time + f" {task[3]}"
