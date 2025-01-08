@@ -122,7 +122,31 @@ def next_task(cursor, name: str):
     print(f"Started task with UUID {uuid}.")
 
 
-def start_task(cursor, name: str):
+def resume_task(cursor):
+    if is_task_running(cursor):
+        print("There's currently a task running!")
+        return
+
+    cursor.execute("""
+    SELECT * FROM tasks
+    """)
+    tasks = cursor.fetchall()
+
+    uuid_task = subprocess.run(
+        ["fzf", '--prompt="Resume task? "'],
+        input="\n".join([f"{task[0]}:\t{task[3]}" for task in tasks]),
+        text=True,
+        capture_output=True,
+    ).stdout.strip()
+    if not uuid_task:
+        raise KeyboardInterrupt("Aborted.")
+    uuid = uuid_task.split(":")[0]
+    task = [task for task in tasks if task[0] == uuid][0]
+    print(f"Resuming task {task[3]}")
+    start_task(cursor, task[3], task[5], task[6])
+
+
+def start_task(cursor, name: str, taskId=None, projectId=None):
     if is_task_running(cursor):
         print("There's currently a task running!")
         return
@@ -134,8 +158,8 @@ def start_task(cursor, name: str):
         "end_time": None,
         "name": name,
         "is_logged": False,
-        "taskId": None,
-        "projectId": None,
+        "taskId": taskId,
+        "projectId": projectId,
     }
     add_task(cursor, task_data)
     print(f"Started task with UUID {uuid}.")
@@ -474,6 +498,8 @@ def assign_task(cursor):
         text=True,
         capture_output=True,
     ).stdout.strip()
+    if not clientName:
+        raise KeyboardInterrupt("Aborted.")
     clientId = next(key for key, val in clients.items() if val[0] == clientName)
     projects = clients[clientId][1]
     projectName = subprocess.run(
@@ -482,6 +508,8 @@ def assign_task(cursor):
         text=True,
         capture_output=True,
     ).stdout.strip()
+    if not projectName:
+        raise KeyboardInterrupt("Aborted.")
     projectId = next(key for key, val in projects.items() if val[0] == projectName)
     tasks = projects[projectId][1]
     taskName = subprocess.run(
@@ -491,6 +519,8 @@ def assign_task(cursor):
         capture_output=True,
     ).stdout.strip()
     taskId = next(key for key, val in tasks.items() if val == taskName)
+    if not taskName:
+        raise KeyboardInterrupt("Aborted.")
 
     cursor.execute("""
     SELECT * FROM tasks
@@ -630,6 +660,7 @@ def main():
     subparsers.add_parser("assign", help="Assign last task to Harvest task")
     subparsers.add_parser("abort", help="Abort current task")
     subparsers.add_parser("extend", help="Set the last completed task to running")
+    subparsers.add_parser("resume", help="Start a new instance of a past task")
     subparsers.add_parser("print", help="Print current week in human readable format")
     subparsers.add_parser("push", help="Upload unlogged tasks to Harvest")
 
@@ -645,6 +676,8 @@ def main():
             case "next":
                 next_task(cursor, args.task_name)
                 assign_task(cursor)
+            case "resume":
+                resume_task(cursor)
             case "extend":
                 extend_task(cursor)
             case "stop":

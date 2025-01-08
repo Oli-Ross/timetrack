@@ -20,6 +20,7 @@ sudo ln -s "$(pwd)/timetrack.py" /usr/local/bin/task
 - `task rename NAME`: Rename last task to `NAME`
 - `task next NAME`: Start a new task with the name `NAME`, end any running tasks
 - `task extend`: Set the last stopped task to running
+- `task resume`: Start a new instance of a past task
 - `task assign`: Interactively select a Harvest project + task to assign to the latest task. Requires `fzf`
 - `task stop`: End the current task
 - `task abort`: Discard the current task
