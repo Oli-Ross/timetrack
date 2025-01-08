@@ -569,7 +569,7 @@ def push_unlogged_tasks(cursor):
         notes = task[3]
         defaultUsed = False
         if task[5]:
-            task_id = task[6]
+            task_id = task[5]
         else:
             task_id = TASK_ID
             defaultUsed = True
