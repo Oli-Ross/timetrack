@@ -115,6 +115,8 @@ def next_task(cursor, name: str):
         "end_time": None,
         "name": name,
         "is_logged": False,
+        "taskId": None,
+        "projectId": None,
     }
     add_task(cursor, task_data)
     print(f"Started task with UUID {uuid}.")
