@@ -641,8 +641,10 @@ def main():
         match args.command:
             case "start":
                 start_task(cursor, args.task_name)
+                assign_task(cursor)
             case "next":
                 next_task(cursor, args.task_name)
+                assign_task(cursor)
             case "extend":
                 extend_task(cursor)
             case "stop":

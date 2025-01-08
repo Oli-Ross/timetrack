@@ -11,7 +11,7 @@ chmod +x ./timetrack.py
 sudo ln -s "$(pwd)/timetrack.py" /usr/local/bin/task
 ```
 
-If you want to use `task assign` to interactively assign Harvest projects/tasks, you need [fzf](https://github.com/junegunn/fzf).
+`task {assign, start, next}` interactively assign Harvest projects/tasks, you need [fzf](https://github.com/junegunn/fzf).
 
 ## CLI interface
 
