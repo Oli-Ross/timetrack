@@ -4,7 +4,7 @@ import sqlite3
 import argparse
 import subprocess
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List
 
@@ -396,6 +396,44 @@ def update_statusbar(cursor):
         f.write(output)
 
 
+def get_weekly_harvest_hours():
+    import os
+    import json
+    import urllib.request
+    import urllib.parse
+
+    #  EMAIL = os.environ.get("EMAIL")
+    #  HARVEST_TOKEN = os.environ.get("HARVEST_TOKEN")
+    #  HARVEST_ACCOUNT_ID = os.environ.get("HARVEST_ACCOUNT_ID")
+    if None in (EMAIL, HARVEST_ACCOUNT_ID, HARVEST_TOKEN):
+        print("Environment variable for Harvest upload is missing.")
+        print("Aborting upload.")
+        return
+
+    today = datetime.now()
+    monday = today - timedelta(days=today.weekday())
+    friday = today + timedelta(days=(4 - today.weekday()))
+    fromDate = monday.strftime("%Y%m%d")
+    toDate = friday.strftime("%Y%m%d")
+    url = f"https://api.harvestapp.com/v2/reports/time/team?from={fromDate}&to={toDate}"
+    headers = {
+        "User-Agent": f"MyIntegration ({EMAIL})",
+        "Authorization": "Bearer " + str(HARVEST_TOKEN),
+        "Harvest-Account-Id": str(HARVEST_ACCOUNT_ID),
+    }
+
+    request = urllib.request.Request(url=url, headers=headers)
+    with urllib.request.urlopen(request, timeout=5) as response:
+        responseCode = response.getcode()
+        if responseCode != 200:
+            raise Exception("Request to Harvest failed.")
+
+        responseBody = response.read().decode("utf-8")
+        jsonResponse = json.loads(responseBody)
+
+    return jsonResponse["results"][0]["total_hours"]
+
+
 def print_this_week(cursor):
     output = ""
     thisWeekUUIDs = get_this_week_uuids(cursor)
@@ -410,7 +448,8 @@ def print_this_week(cursor):
     mins = total_mins % 60
     if len(this_week) == 1:
         this_week: str = "0" + this_week
-    output += f"# KW {this_week} / {this_year} ({hours:02}:{mins:02} spent)\n"
+    hours_harvest = get_weekly_harvest_hours()
+    output += f"# KW {this_week} / {this_year} ({hours:02}:{mins:02} spent, {hours_harvest} in Harvest)\n"
 
     current_weekday = ""
     for task in tasks:
