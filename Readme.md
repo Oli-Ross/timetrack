@@ -57,6 +57,7 @@ export HARVEST_ACCOUNT_ID=1234
 export HARVEST_TOKEN=1234
 ```
 Read the [API doc](https://help.getharvest.com/api-v2/) for more info.
+You can also put them in a `.env` file in the top-leve directory of this repo.
 
 Also, there are 2 more config variables that are currently hardcoded:
 ```python

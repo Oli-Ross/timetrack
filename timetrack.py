@@ -4,6 +4,8 @@ import sqlite3
 import argparse
 import subprocess
 import logging
+import os
+from dotenv import load_dotenv
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List
@@ -14,6 +16,13 @@ ARCHIVE_DIR = Path("/tmp")
 
 PROJECT_ID = 1
 TASK_ID = 1
+
+dotenv_path = Path(__file__).resolve().parent / ".env"
+load_dotenv(dotenv_path=dotenv_path)
+
+EMAIL = os.getenv("EMAIL")
+HARVEST_TOKEN = os.getenv("HARVEST_TOKEN")
+HARVEST_ACCOUNT_ID = os.getenv("HARVEST_ACCOUNT_ID")
 
 
 def adapt_datetime_epoch(val):
@@ -489,14 +498,10 @@ def show_status(cursor):
 
 
 def assign_task(cursor):
-    import os
     import json
     import urllib.request
     import urllib.parse
 
-    EMAIL = os.environ.get("EMAIL")
-    HARVEST_TOKEN = os.environ.get("HARVEST_TOKEN")
-    HARVEST_ACCOUNT_ID = os.environ.get("HARVEST_ACCOUNT_ID")
     if None in (EMAIL, HARVEST_ACCOUNT_ID, HARVEST_TOKEN):
         print("Environment variable for Harvest upload is missing.")
         print("Aborting upload.")
@@ -631,9 +636,6 @@ def push_unlogged_tasks(cursor):
         }
         data = urllib.parse.urlencode(data).encode("ascii")
 
-        EMAIL = os.environ.get("EMAIL")
-        HARVEST_TOKEN = os.environ.get("HARVEST_TOKEN")
-        HARVEST_ACCOUNT_ID = os.environ.get("HARVEST_ACCOUNT_ID")
         if None in (EMAIL, HARVEST_ACCOUNT_ID, HARVEST_TOKEN):
             print("Environment variable for Harvest upload is missing.")
             print("Aborting upload.")
