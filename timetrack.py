@@ -440,6 +440,9 @@ def get_weekly_harvest_hours():
         responseBody = response.read().decode("utf-8")
         jsonResponse = json.loads(responseBody)
 
+    if not jsonResponse["results"]:
+        return 0.0
+
     return jsonResponse["results"][0]["total_hours"]
 
 
