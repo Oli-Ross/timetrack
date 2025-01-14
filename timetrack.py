@@ -63,6 +63,22 @@ def setup(cursor):
     return cursor
 
 
+def fzf(input: List[str], prompt=None):
+    if prompt:
+        cmd_line = ["fzf", f'--prompt="{prompt} "']
+    else:
+        cmd_line = ["fzf"]
+    val = subprocess.run(
+        cmd_line,
+        input="\n".join(input),
+        text=True,
+        capture_output=True,
+    ).stdout.strip()
+    if not val:
+        raise KeyboardInterrupt("Aborted.")
+    return val
+
+
 def get_weeks_uuids(cursor, KW=None):
     if KW:
         this_week = KW
@@ -99,10 +115,7 @@ def get_task_length_in_mins(cursor, uuid):
 
 
 def get_task_lengths_in_mins(cursor, uuids: List[str]):
-    total_mins = 0
-    for uuid in uuids:
-        total_mins += get_task_length_in_mins(cursor, uuid)
-    return total_mins
+    return sum([get_task_length_in_mins(cursor, uuid) for uuid in uuids])
 
 
 def add_task(cursor, task_data: Dict[str, str | datetime | bool | None]):
@@ -150,14 +163,7 @@ def resume_task(cursor):
     )
     tasks = cursor.fetchall()
 
-    uuid_task = subprocess.run(
-        ["fzf", '--prompt="Resume task? "'],
-        input="\n".join([f"{task[0]}:\t{task[3]}" for task in tasks]),
-        text=True,
-        capture_output=True,
-    ).stdout.strip()
-    if not uuid_task:
-        raise KeyboardInterrupt("Aborted.")
+    uuid_task = fzf([f"{task[0]}:\t{task[3]}" for task in tasks], prompt="Resume task?")
     uuid = uuid_task.split(":")[0]
     task = [task for task in tasks if task[0] == uuid][0]
     print(f"Resuming task {task[3]}")
@@ -556,35 +562,14 @@ def assign_task(cursor):
             taskId = str(task["task"]["id"])
             if not taskId in projects[projectId][1]:
                 projects[projectId][1][taskId] = task["task"]["name"]
-    clientName = subprocess.run(
-        ["fzf"],
-        input="\n".join([x[0] for x in clients.values()]),
-        text=True,
-        capture_output=True,
-    ).stdout.strip()
-    if not clientName:
-        raise KeyboardInterrupt("Aborted.")
+    clientName = fzf([x[0] for x in clients.values()])
     clientId = next(key for key, val in clients.items() if val[0] == clientName)
     projects = clients[clientId][1]
-    projectName = subprocess.run(
-        ["fzf"],
-        input="\n".join([x[0] for x in projects.values()]),
-        text=True,
-        capture_output=True,
-    ).stdout.strip()
-    if not projectName:
-        raise KeyboardInterrupt("Aborted.")
+    projectName = fzf([x[0] for x in projects.values()])
     projectId = next(key for key, val in projects.items() if val[0] == projectName)
     tasks = projects[projectId][1]
-    taskName = subprocess.run(
-        ["fzf"],
-        input="\n".join(tasks.values()),
-        text=True,
-        capture_output=True,
-    ).stdout.strip()
+    taskName = fzf(tasks.values())
     taskId = next(key for key, val in tasks.items() if val == taskName)
-    if not taskName:
-        raise KeyboardInterrupt("Aborted.")
 
     cursor.execute("""
     SELECT * FROM tasks
