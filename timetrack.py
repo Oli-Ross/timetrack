@@ -320,8 +320,7 @@ def show_unlogged_tasks(cursor):
 
 def show_all_tasks(cursor):
     print("All recorded tasks:")
-    tasks = get_all_tasks(cursor)
-    for task in tasks:
+    for task in get_all_tasks(cursor):
         print(show_task(cursor, task[0], showDate=True))
 
 
@@ -374,8 +373,7 @@ def log_tasks(cursor):
 
 def show_db(cursor):
     logging.debug("----------------------- Debug output:")
-    tasks = get_all_tasks(cursor)
-    for row in tasks:
+    for row in get_all_tasks(cursor):
         logging.debug(row)
     logging.debug("----------------------- Last logged:")
     cursor.execute("SELECT * FROM last_logged")
@@ -401,11 +399,13 @@ def update_statusbar(cursor):
     if not is_task_running(cursor):
         output = ""
     else:
-        cursor.execute("""
+        cursor.execute(
+            """
         SELECT * FROM tasks
         ORDER BY start_time DESC
         LIMIT 1
-        """)
+        """
+        )
         task = cursor.fetchone()
         name = task[3]
         start_time = datetime.fromtimestamp(task[1]).strftime("%-H:%M")
@@ -415,14 +415,10 @@ def update_statusbar(cursor):
 
 
 def get_weekly_harvest_hours(KW=None):
-    import os
     import json
     import urllib.request
     import urllib.parse
 
-    #  EMAIL = os.environ.get("EMAIL")
-    #  HARVEST_TOKEN = os.environ.get("HARVEST_TOKEN")
-    #  HARVEST_ACCOUNT_ID = os.environ.get("HARVEST_ACCOUNT_ID")
     if None in (EMAIL, HARVEST_ACCOUNT_ID, HARVEST_TOKEN):
         print("Environment variable for Harvest upload is missing.")
         print("Aborting upload.")
@@ -592,7 +588,6 @@ def assign_task(cursor):
 
 
 def push_unlogged_tasks(cursor):
-    import os
     import json
     import urllib.request
     import urllib.parse
