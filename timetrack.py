@@ -266,7 +266,7 @@ def stop_task(cursor):
         (datetime.now().timestamp(), uuid),
     )
     start_time = datetime.fromtimestamp(task[1])
-    diff_mins = int(((datetime.now() - start_time).total_seconds() % 3600) / 60)
+    diff_mins = int(((datetime.now() - start_time).total_seconds() / 3600) / 60)
     print(f"Ended task {uuid} (ran for {diff_mins} mins).")
 
 
