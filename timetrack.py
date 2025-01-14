@@ -152,9 +152,7 @@ def next_task(cursor, name: str):
 
 
 def resume_task(cursor):
-    if is_task_running(cursor):
-        print("There's currently a task running!")
-        return
+    assert not is_task_running(cursor), "There's currently a task running!"
 
     cursor.execute(
         """
@@ -171,9 +169,7 @@ def resume_task(cursor):
 
 
 def start_task(cursor, name: str, taskId=None, projectId=None):
-    if is_task_running(cursor):
-        print("There's currently a task running!")
-        return
+    assert not is_task_running(cursor), "There's currently a task running!"
 
     uuid = get_short_uuid()
     task_data = {
@@ -190,9 +186,7 @@ def start_task(cursor, name: str, taskId=None, projectId=None):
 
 
 def extend_task(cursor):
-    if is_task_running(cursor):
-        print("Task currently running!")
-        return
+    assert not is_task_running(cursor), "There's currently a task running!"
 
     cursor.execute(
         """
@@ -239,9 +233,8 @@ def rename_task(cursor, task_name):
 
 
 def abort_task(cursor):
-    if not is_task_running(cursor):
-        print("No task currently running!")
-        return
+    assert is_task_running(cursor), "No task currently running!"
+
     cursor.execute("""
     SELECT * FROM tasks
     ORDER BY start_time DESC
@@ -262,9 +255,8 @@ def abort_task(cursor):
 
 
 def stop_task(cursor):
-    if not is_task_running(cursor):
-        print("No task currently running!")
-        return
+    assert is_task_running(cursor), "No task currently running!"
+
     cursor.execute("""
     SELECT * FROM tasks
     ORDER BY start_time DESC
