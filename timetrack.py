@@ -40,7 +40,8 @@ def get_short_uuid():
 
 
 def setup(cursor):
-    cursor.execute("""
+    cursor.execute(
+        """
     CREATE TABLE IF NOT EXISTS tasks (
         uuid TEXT PRIMARY KEY,
         start_time TIMESTAMP,
@@ -50,12 +51,15 @@ def setup(cursor):
         taskId TEXT,
         projectId TEXT
     )
-    """)
-    cursor.execute("""
+    """
+    )
+    cursor.execute(
+        """
     CREATE TABLE IF NOT EXISTS last_logged (
         uuid TEXT PRIMARY KEY
     )
-    """)
+    """
+    )
     return cursor
 
 
@@ -139,9 +143,11 @@ def resume_task(cursor):
         print("There's currently a task running!")
         return
 
-    cursor.execute("""
+    cursor.execute(
+        """
     SELECT * FROM tasks
-    """)
+    """
+    )
     tasks = cursor.fetchall()
 
     uuid_task = subprocess.run(
@@ -182,11 +188,13 @@ def extend_task(cursor):
         print("Task currently running!")
         return
 
-    cursor.execute("""
+    cursor.execute(
+        """
     SELECT * FROM tasks
     ORDER BY start_time DESC
     LIMIT 1
-    """)
+    """
+    )
 
     task = cursor.fetchone()
     uuid = task[0]
@@ -292,10 +300,10 @@ def show_task(cursor, uuid, showDate=False, showWeekDay=True):
 def get_unlogged_task_uuids(cursor):
     cursor.execute(
         """
-            SELECT * FROM tasks
-            WHERE is_logged IS FALSE
-            AND end_time IS NOT NULL
-            """
+    SELECT * FROM tasks
+    WHERE is_logged IS FALSE
+    AND end_time IS NOT NULL
+    """
     )
 
     unloggedTaskUUIDs = [task[0] for task in cursor.fetchall() if task[4] != 1]
@@ -359,9 +367,9 @@ def log_tasks(cursor):
         print(show_task(cursor, uuid))
         cursor.execute(
             """
-                INSERT INTO last_logged
-                VALUES (?)
-                """,
+        INSERT INTO last_logged
+        VALUES (?)
+        """,
             (uuid,),
         )
 
