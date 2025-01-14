@@ -59,8 +59,11 @@ def setup(cursor):
     return cursor
 
 
-def get_this_week_uuids(cursor):
-    this_week = datetime.today().date().isocalendar()[1]
+def get_weeks_uuids(cursor, KW=None):
+    if KW:
+        this_week = KW
+    else:
+        this_week = datetime.today().date().isocalendar()[1]
     this_year = datetime.today().date().isocalendar()[0]
     tasks = get_all_tasks(cursor)
     thisWeekUUIDs = [
@@ -405,7 +408,7 @@ def update_statusbar(cursor):
         f.write(output)
 
 
-def get_weekly_harvest_hours():
+def get_weekly_harvest_hours(KW=None):
     import os
     import json
     import urllib.request
@@ -419,7 +422,10 @@ def get_weekly_harvest_hours():
         print("Aborting upload.")
         return
 
-    today = datetime.now()
+    if KW:
+        today = datetime.fromisocalendar(datetime.now().year, KW, 2)
+    else:
+        today = datetime.now()
     monday = today - timedelta(days=today.weekday())
     friday = today + timedelta(days=(4 - today.weekday()))
     fromDate = monday.strftime("%Y%m%d")
@@ -446,21 +452,24 @@ def get_weekly_harvest_hours():
     return jsonResponse["results"][0]["total_hours"]
 
 
-def print_this_week(cursor):
+def print_week(cursor, KW=None):
     output = ""
-    thisWeekUUIDs = get_this_week_uuids(cursor)
+    weekUUIDs = get_weeks_uuids(cursor, KW)
     tasks = []
-    for uuid in thisWeekUUIDs:
+    for uuid in weekUUIDs:
         task = get_task(cursor, uuid)
         tasks.append(task)
-    this_week = str(datetime.today().date().isocalendar()[1])
+    if not KW:
+        this_week = str(datetime.today().date().isocalendar()[1])
+    else:
+        this_week = str(KW)
     this_year = str(datetime.today().date().isocalendar()[0])
-    total_mins = get_task_lengths_in_mins(cursor, thisWeekUUIDs)
+    total_mins = get_task_lengths_in_mins(cursor, weekUUIDs)
     hours = total_mins // 60
     mins = total_mins % 60
     if len(this_week) == 1:
         this_week: str = "0" + this_week
-    hours_harvest = get_weekly_harvest_hours()
+    hours_harvest = get_weekly_harvest_hours(KW)
     output += f"# KW {this_week} / {this_year} ({hours:02}:{mins:02} spent, {hours_harvest} in Harvest)\n"
 
     current_weekday = ""
@@ -704,7 +713,12 @@ def main():
     subparsers.add_parser("abort", help="Abort current task")
     subparsers.add_parser("extend", help="Set the last completed task to running")
     subparsers.add_parser("resume", help="Start a new instance of a past task")
-    subparsers.add_parser("print", help="Print current week in human readable format")
+    print_parser = subparsers.add_parser(
+        "print", help="Print current week in human readable format"
+    )
+    print_parser.add_argument(
+        "--kw", type=int, help="Calendar week to print for.", default=None
+    )
     subparsers.add_parser("push", help="Upload unlogged tasks to Harvest")
 
     args = parser.parse_args()
@@ -746,11 +760,11 @@ def main():
                     case "all":
                         show_all_tasks(cursor)
             case "print":
-                print_this_week(cursor)
+                print_week(cursor, args.kw)
             case "assign":
                 assign_task(cursor)
             case _:
-                print_this_week(cursor)
+                print_week(cursor)
 
         show_db(cursor)
         update_statusbar(cursor)
