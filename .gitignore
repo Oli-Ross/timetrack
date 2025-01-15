@@ -1,1 +1,6 @@
-timetrack.db
+*.db
+*.db.bkp
+*.env
+.venv/
+**/__pycache__/
+src/src.egg-info

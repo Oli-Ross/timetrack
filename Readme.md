@@ -4,11 +4,18 @@ A simple tool to track working hours by task via CLI.
 
 ## Setup 
 
-Chmod + link the script:
+Set up venv, install dependencies + package:
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+pip install -e .
+```
+
+Running the script (if you add the alias to `ZSHRC/BASHRC`, link to the Python binary of the venv):
 
 ```bash
-chmod +x ./timetrack.py
-sudo ln -s "$(pwd)/timetrack.py" /usr/local/bin/task
+alias task="python src/app.py"
+task ${SUBCOMMAND}
 ```
 
 `task {assign, start, next}` interactively assign Harvest projects/tasks, you need [fzf](https://github.com/junegunn/fzf).
@@ -29,8 +36,9 @@ sudo ln -s "$(pwd)/timetrack.py" /usr/local/bin/task
 - `task show {all, today, unlogged}`: Only show tasks that are from this day/unlogged
 - `task print`: Pretty print the current week into `${ARCHIVE_DIR}/KW_${XX}.md` + stdout, where `XX` is the current calendar week.
 - `task push`: Upload unlogged files to Harvest
+- `task pull`: Sync remote data (clients, projects, tasks) to local db
 
-On each `task` invocation: 
+On each `task` invocation that changes the current task: 
 - Print the current task + time running to a file for the OS statusbar
 
 Using `-d` will dump the entire database for debugging purposes.
@@ -70,5 +78,5 @@ properly using `task assign`.
 ## Internal architecture
 
 - SQLite database
-- Each task has unique UUID
+- Separate tables keep track of logged tasks (locally), as well as clients, projects and tasks (as defined by Harvest).
 - [Harvest API](https://help.getharvest.com/api-v2/) for upload
