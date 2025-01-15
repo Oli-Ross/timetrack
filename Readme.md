@@ -4,11 +4,18 @@ A simple tool to track working hours by task via CLI.
 
 ## Setup 
 
-Chmod + link the script:
+Set up venv, install dependencies + package:
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+pip install -e .
+```
+
+Running the script (recommended to set up an alias):
 
 ```bash
-chmod +x ./timetrack.py
-sudo ln -s "$(pwd)/timetrack.py" /usr/local/bin/task
+alias task="python src/app.py"
+task ${SUBCOMMAND}
 ```
 
 `task {assign, start, next}` interactively assign Harvest projects/tasks, you need [fzf](https://github.com/junegunn/fzf).
