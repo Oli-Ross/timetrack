@@ -26,7 +26,7 @@ class LogHistory(pw.Model):
 
 
 class HarvestClient(pw.Model):
-    projectId = pw.IntegerField(primary_key=True)
+    clientId = pw.IntegerField()
     name = pw.CharField()
 
     class Meta:
@@ -35,7 +35,7 @@ class HarvestClient(pw.Model):
 
 
 class HarvestProject(pw.Model):
-    projectId = pw.IntegerField(primary_key=True)
+    projectId = pw.IntegerField()
     client = pw.ForeignKeyField(HarvestClient, backref="projects")
     name = pw.CharField()
 
@@ -45,7 +45,7 @@ class HarvestProject(pw.Model):
 
 
 class HarvestTask(pw.Model):
-    taskId = pw.IntegerField(primary_key=True)
+    taskId = pw.IntegerField()
     project = pw.ForeignKeyField(HarvestProject, backref="tasks")
     client = pw.ForeignKeyField(HarvestClient, backref="tasks")
     name = pw.CharField()
@@ -55,6 +55,9 @@ class HarvestTask(pw.Model):
         table_name = "harvest_tasks"
 
 
-if __name__ == "__main__":
-    db.connect()
-    db.create_tables([HarvestClient, HarvestProject, HarvestTask])
+class HarvestMeta(pw.Model):
+    hours = pw.FloatField(primary_key=True)
+
+    class Meta:
+        database = db
+        table_name = "harvest_weeklyhours"

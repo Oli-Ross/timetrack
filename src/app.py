@@ -1,16 +1,27 @@
 #!/usr/bin/env python3
 
 import argparse
-import os
-from dotenv import load_dotenv
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List
 
 from peewee import fn
-from model import Task, LogHistory
+
+from harvest import push_tasks, sync_weekly_harvest_hours, update_local_harvest_db
+from model import (
+    HarvestClient,
+    Task,
+    LogHistory,
+    HarvestMeta,
+    HarvestProject,
+)
 from db_config import db
-from utils import fzf, get_iso_week_dates, get_short_uuid
+from utils import (
+    fzf,
+    get_iso_week_dates,
+    get_short_uuid,
+    get_task_lengths_in_mins,
+)
 
 TIMETRACK_DB = "./timetrack.db"
 STATUSBAR_FILE = "/tmp/task"
@@ -19,12 +30,6 @@ ARCHIVE_DIR = Path("./timetrack")
 PROJECT_ID = 1
 TASK_ID = 1
 
-dotenv_path = Path(__file__).resolve().parent.parent / ".env"
-load_dotenv(dotenv_path=dotenv_path)
-
-EMAIL = os.getenv("EMAIL")
-HARVEST_TOKEN = os.getenv("HARVEST_TOKEN")
-HARVEST_ACCOUNT_ID = os.getenv("HARVEST_ACCOUNT_ID")
 
 
 def get_weeks_tasks(KW=None):
@@ -40,24 +45,8 @@ def get_weeks_tasks(KW=None):
     return tasks
 
 
-def get_all_tasks() -> List[Task]:
-    return Task.select()
-
-
 def get_task(uuid) -> Task:
     return Task.select().where(Task.uuid == uuid)[0]
-
-
-def get_task_length_in_mins(task: Task):
-    if task.end_time:
-        end_time = task.end_time.timestamp()
-    else:
-        end_time = datetime.now().timestamp()
-    return int((float(end_time) - float(task.start_time.timestamp())) / 60)
-
-
-def get_task_lengths_in_mins(tasks: List[Task]):
-    return sum([get_task_length_in_mins(task) for task in tasks])
 
 
 def add_task(task_data: Dict[str, str | datetime | bool | None]):
@@ -190,7 +179,7 @@ def show_unlogged_tasks():
 
 def show_all_tasks():
     print("All recorded tasks:")
-    for task in get_all_tasks():
+    for task in Task.select():
         print(show_task(task, showDate=True))
 
 
@@ -226,7 +215,7 @@ def log_tasks():
 
 def show_db():
     print("----------------------- Debug output:")
-    for row in get_all_tasks():
+    for row in Task.select():
         print(
             "\n".join(
                 "|".join(f"{value}" for _, value in record.__data__.items())
@@ -262,46 +251,6 @@ def update_statusbar():
         f.write(output)
 
 
-def get_weekly_harvest_hours(KW=None):
-    import json
-    import urllib.request
-    import urllib.parse
-
-    if None in (EMAIL, HARVEST_ACCOUNT_ID, HARVEST_TOKEN):
-        print("Environment variable for Harvest upload is missing.")
-        print("Aborting upload.")
-        return
-
-    if KW:
-        today = datetime.fromisocalendar(datetime.now().year, KW, 2)
-    else:
-        today = datetime.now()
-    monday = today - timedelta(days=today.weekday())
-    friday = today + timedelta(days=(4 - today.weekday()))
-    fromDate = monday.strftime("%Y%m%d")
-    toDate = friday.strftime("%Y%m%d")
-    url = f"https://api.harvestapp.com/v2/reports/time/team?from={fromDate}&to={toDate}"
-    headers = {
-        "User-Agent": f"MyIntegration ({EMAIL})",
-        "Authorization": "Bearer " + str(HARVEST_TOKEN),
-        "Harvest-Account-Id": str(HARVEST_ACCOUNT_ID),
-    }
-
-    request = urllib.request.Request(url=url, headers=headers)
-    with urllib.request.urlopen(request, timeout=5) as response:
-        responseCode = response.getcode()
-        if responseCode != 200:
-            raise Exception("Request to Harvest failed.")
-
-        responseBody = response.read().decode("utf-8")
-        jsonResponse = json.loads(responseBody)
-
-    if not jsonResponse["results"]:
-        return 0.0
-
-    return jsonResponse["results"][0]["total_hours"]
-
-
 def print_week(KW=None):
     output = ""
     weekTasks = get_weeks_tasks(KW)
@@ -318,7 +267,7 @@ def print_week(KW=None):
     mins = total_mins % 60
     if len(this_week) == 1:
         this_week: str = "0" + this_week
-    hours_harvest = get_weekly_harvest_hours(KW)
+    hours_harvest = HarvestMeta.select().limit(1)[0].hours
     output += f"# KW {this_week} / {this_year} ({hours:02}:{mins:02} spent, {hours_harvest} in Harvest)\n"
 
     current_weekday = ""
@@ -352,126 +301,37 @@ def show_status():
 
 
 def assign_task():
-    import json
-    import urllib.request
-    import urllib.parse
-
-    if None in (EMAIL, HARVEST_ACCOUNT_ID, HARVEST_TOKEN):
-        print("Environment variable for Harvest upload is missing.")
-        print("Aborting upload.")
-        return
-
-    url = "https://api.harvestapp.com/v2/users/me/project_assignments"
-    headers = {
-        "User-Agent": f"MyIntegration ({EMAIL})",
-        "Authorization": "Bearer " + str(HARVEST_TOKEN),
-        "Harvest-Account-Id": str(HARVEST_ACCOUNT_ID),
-    }
-
-    request = urllib.request.Request(url=url, headers=headers)
-    with urllib.request.urlopen(request, timeout=5) as response:
-        responseCode = response.getcode()
-        if responseCode != 200:
-            raise Exception("Request to Harvest failed.")
-
-        responseBody = response.read().decode("utf-8")
-        jsonResponse = json.loads(responseBody)
-
-    clients = {}
-    for project in jsonResponse["project_assignments"]:
-        clientId = str(project["client"]["id"])
-        projectId = str(project["project"]["id"])
-        if not clientId in clients:
-            clients[clientId] = project["client"]["name"], {}
-        projects = clients[clientId][1]
-        if not projectId in projects:
-            projects[projectId] = project["project"]["name"], {}
-        for task in project["task_assignments"]:
-            taskId = str(task["task"]["id"])
-            if not taskId in projects[projectId][1]:
-                projects[projectId][1][taskId] = task["task"]["name"]
-    clientName = fzf([x[0] for x in clients.values()])
-    clientId = next(key for key, val in clients.items() if val[0] == clientName)
-    projects = clients[clientId][1]
-    projectName = fzf([x[0] for x in projects.values()])
-    projectId = next(key for key, val in projects.items() if val[0] == projectName)
-    tasks = projects[projectId][1]
-    taskName = fzf(tasks.values())
-    taskId = next(key for key, val in tasks.items() if val == taskName)
+    clientAndIds = [f"{x.clientId:12}:\t{x.name}" for x in HarvestClient.select()]
+    clientId = fzf(clientAndIds, "Client?").split(":")[0]
+    client = HarvestClient.select().where(HarvestClient.clientId == clientId)[0]
+    projectAndIds = [f"{x.projectId:12}:\t{x.name}" for x in client.projects]
+    projectId = fzf(projectAndIds, "Project?").split(":")[0]
+    project = HarvestProject.select().where(HarvestProject.projectId == projectId)[0]
+    taskAndIds = [f"{x.taskId:12}:\t{x.name}" for x in project.tasks]
+    taskId = fzf(taskAndIds, "Task?").split(":")[0]
 
     task = Task.select().order_by(Task.start_time.desc()).limit(1)[0]
     task.projectId = projectId
     task.taskId = taskId
     task.save()
 
-    print(f'Attributed task "{task.name}" to {clientName}/{projectName}/{taskName}.')
+    print(f'Attributed task "{task.name}" to {client.name}/{project.name}/{task.name}.')
 
 
 def push_unlogged_tasks():
-    import json
-    import urllib.request
-    import urllib.parse
-
     unloggedTasks = get_unlogged_tasks()
     if not unloggedTasks:
         print("No tasks to be uploaded.")
         return
-    for task in unloggedTasks:
-        time_spent = get_task_length_in_mins(task) / 60
-
-        spent_date = task.start_time.strftime("%Y-%m-%d")
-        hours = f"{time_spent:.2f}"
-        notes = task.name
-        defaultUsed = False
-        if task.taskId:
-            task_id = task.taskId
-        else:
-            task_id = TASK_ID
-            defaultUsed = True
-        if task.projectId:
-            project_id = task.projectId
-        else:
-            project_id = PROJECT_ID
-            defaultUsed = True
-        if defaultUsed:
-            print(
-                f'Task "{task.name}" with UUID {task.uuid} has missing task info + is pushed as default task.'
-            )
-
-        data = {
-            "spent_date": spent_date,
-            "hours": hours,
-            "notes": notes,
-            "project_id": project_id,
-            "task_id": task_id,
-        }
-        data = urllib.parse.urlencode(data).encode("ascii")
-
-        if None in (EMAIL, HARVEST_ACCOUNT_ID, HARVEST_TOKEN):
-            print("Environment variable for Harvest upload is missing.")
-            print("Aborting upload.")
-            return
-
-        url = "https://api.harvestapp.com/v2/time_entries"
-        headers = {
-            "User-Agent": f"MyIntegration ({EMAIL})",
-            "Authorization": "Bearer " + str(HARVEST_TOKEN),
-            "Harvest-Account-Id": str(HARVEST_ACCOUNT_ID),
-        }
-
-        request = urllib.request.Request(url=url, headers=headers, data=data)
-        with urllib.request.urlopen(request, timeout=5) as response:
-            responseCode = response.getcode()
-            if responseCode != 201:
-                responseBody = response.read().decode("utf-8")
-                jsonResponse = json.loads(responseBody)
-                print(json.dumps(jsonResponse, sort_keys=True, indent=2))
-                raise Exception(
-                    f"Request failed: Couldn't push task {uuid} to Harvest."
-                )
-
+    push_tasks(unloggedTasks)
     log_tasks()
     print("Successfully pushed all unlogged tasks.")
+
+
+def pull_harvest_data():
+    sync_weekly_harvest_hours()
+    update_local_harvest_db()
+    print("Updated local db + weekly hours.")
 
 
 def main():
@@ -508,6 +368,7 @@ def main():
     )
     subparsers.add_parser("status", help="Show info about currently running task")
     subparsers.add_parser("stop", help="Stop current task")
+    subparsers.add_parser("pull", help="Sync Harvest data back to local db")
     subparsers.add_parser("assign", help="Assign last task to Harvest task")
     subparsers.add_parser("abort", help="Abort current task")
     subparsers.add_parser("extend", help="Set the last completed task to running")
@@ -555,6 +416,8 @@ def main():
                 log_tasks()
             case "push":
                 push_unlogged_tasks()
+            case "pull":
+                pull_harvest_data()
             case "show":
                 match args.filter:
                     case "today":
@@ -576,8 +439,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-# Log locally
-# Push + fetch new hours
-# Log locally
-# -> Only interact with Harvest when executing push

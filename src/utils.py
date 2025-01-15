@@ -2,6 +2,19 @@ import uuid
 from datetime import datetime, timedelta
 import subprocess
 from typing import List
+from model import Task
+
+
+def get_task_length_in_mins(task: Task):
+    if task.end_time:
+        end_time = task.end_time.timestamp()
+    else:
+        end_time = datetime.now().timestamp()
+    return int((float(end_time) - float(task.start_time.timestamp())) / 60)
+
+
+def get_task_lengths_in_mins(tasks: List[Task]):
+    return sum([get_task_length_in_mins(task) for task in tasks])
 
 
 def get_iso_week_dates(iso_year, iso_week):
