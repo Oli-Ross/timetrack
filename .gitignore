@@ -2,5 +2,5 @@
 *.db.bkp
 *.env
 .venv/
-**/__pycache/
+**/__pycache__/
 src/src.egg-info
