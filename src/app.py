@@ -3,7 +3,7 @@
 import argparse
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict
 
 from peewee import fn
 
@@ -23,7 +23,6 @@ from utils import (
     get_task_lengths_in_mins,
 )
 
-TIMETRACK_DB = "./timetrack.db"
 STATUSBAR_FILE = "/tmp/task"
 ARCHIVE_DIR = Path("./timetrack")
 
