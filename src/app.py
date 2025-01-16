@@ -26,10 +26,6 @@ from utils import (
 STATUSBAR_FILE = "/tmp/task"
 ARCHIVE_DIR = Path("./timetrack")
 
-PROJECT_ID = 1
-TASK_ID = 1
-
-
 
 def get_weeks_tasks(KW=None):
     if KW:
