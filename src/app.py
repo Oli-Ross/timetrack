@@ -2,9 +2,7 @@
 
 import argparse
 from datetime import datetime
-from pathlib import Path
 from typing import Dict
-
 from peewee import fn
 
 from harvest import push_tasks, sync_weekly_harvest_hours, update_local_harvest_db
@@ -22,9 +20,7 @@ from utils import (
     get_short_uuid,
     get_task_lengths_in_mins,
 )
-
-STATUSBAR_FILE = "/tmp/task"
-ARCHIVE_DIR = Path("./timetrack")
+from env import ARCHIVE_DIR, STATUSBAR_FILE
 
 
 def get_weeks_tasks(KW=None):

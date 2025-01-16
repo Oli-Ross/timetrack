@@ -1,4 +1,5 @@
 from peewee import SqliteDatabase
 from pathlib import Path
+from env import TIMETRACK_DB
 
-db = SqliteDatabase(Path(__file__).parent.parent / "timetrack.db")
+db = SqliteDatabase(TIMETRACK_DB)

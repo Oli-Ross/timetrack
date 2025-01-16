@@ -1,6 +1,3 @@
-from dotenv import load_dotenv
-from pathlib import Path
-import os
 from datetime import datetime, timedelta
 import json
 import urllib.request
@@ -9,15 +6,7 @@ import urllib.parse
 from utils import get_task_length_in_mins
 from db_config import db
 from model import HarvestClient, HarvestProject, HarvestTask, HarvestMeta
-
-PROJECT_ID = 1
-TASK_ID = 1
-
-dotenv_path = Path(__file__).resolve().parent.parent / ".env"
-load_dotenv(dotenv_path=dotenv_path)
-EMAIL = os.getenv("EMAIL")
-HARVEST_TOKEN = os.getenv("HARVEST_TOKEN")
-HARVEST_ACCOUNT_ID = os.getenv("HARVEST_ACCOUNT_ID")
+from env import EMAIL, HARVEST_TOKEN, HARVEST_ACCOUNT_ID, TASK_ID, PROJECT_ID
 
 
 def sync_weekly_harvest_hours(KW=None):
