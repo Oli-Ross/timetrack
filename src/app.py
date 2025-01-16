@@ -140,7 +140,7 @@ def stop_task():
     task.end_time = datetime.now()
     task.save()
 
-    diff_mins = int(((datetime.now() - task.start_time).total_seconds() / 3600) / 60)
+    diff_mins = int(((datetime.now() - task.start_time).total_seconds()) / 60)
     print(f"Ended task {task.uuid} (ran for {diff_mins} mins).")
 
 
