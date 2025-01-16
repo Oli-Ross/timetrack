@@ -74,7 +74,7 @@ def resume_task():
     uuid = fzf({task.uuid: task.name for task in tasks}, prompt="Resume task?")
     task = [task for task in tasks if task.uuid == uuid][0]
     print(f"Resuming task {task.name}")
-    start_task(task.name, task.uuid, task.projectId)
+    start_task(task.name, task.taskId, task.projectId)
 
 
 def start_task(name: str, taskId=None, projectId=None):
