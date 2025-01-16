@@ -310,6 +310,7 @@ def push_unlogged_tasks():
         return
     push_tasks(unloggedTasks)
     log_tasks()
+    sync_weekly_harvest_hours()
     print("Successfully pushed all unlogged tasks.")
 
 
