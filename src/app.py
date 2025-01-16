@@ -79,10 +79,7 @@ def resume_task():
 
     tasks = Task.select()
 
-    uuid_task = fzf(
-        [f"{task.uuid}:\t{task.name}" for task in tasks], prompt="Resume task?"
-    )
-    uuid = uuid_task.split(":")[0]
+    uuid = fzf({task.uuid: task.name for task in tasks}, prompt="Resume task?")
     task = [task for task in tasks if task.uuid == uuid][0]
     print(f"Resuming task {task.name}")
     start_task(task.name, task.uuid, task.projectId)
@@ -300,16 +297,13 @@ def show_status():
 
 
 def assign_task():
-    clientAndIds = [f"{x.clientId:12}:\t{x.name}" for x in HarvestClient.select()]
-    clientId = fzf(clientAndIds, "Client?").split(":")[0]
+    clientId = fzf({x.clientId: x.name for x in HarvestClient.select()}, "Client?")
     client = HarvestClient.select().where(HarvestClient.clientId == clientId)[0]
-    projectAndIds = [f"{x.projectId:12}:\t{x.name}" for x in client.projects]
-    projectId = fzf(projectAndIds, "Project?").split(":")[0]
+    projectId = fzf({x.projectId: x.name for x in client.projects}, "Project?")
     project = HarvestProject.select().where(HarvestProject.projectId == projectId)[0]
-    taskAndIds = [f"{x.taskId:12}:\t{x.name}" for x in project.tasks]
-    taskId = fzf(taskAndIds, "Task?").split(":")[0]
-
+    taskId = fzf({x.taskId: x.name for x in project.tasks}, "Task?")
     task = Task.select().order_by(Task.start_time.desc()).limit(1)[0]
+
     task.projectId = projectId
     task.taskId = taskId
     task.save()

@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timedelta
 import subprocess
-from typing import List
+from typing import List, Dict
 from model import Task
 
 
@@ -23,20 +23,22 @@ def get_iso_week_dates(iso_year, iso_week):
     return start_date, end_date
 
 
-def fzf(input: List[str], prompt=None) -> str:
+def fzf(input: Dict, prompt=None) -> str:
+    fzfInput = "\n".join([str(key) + ":" + str(val) for key, val in input.items()])
+    cmd_line = ["fzf"]
     if prompt:
-        cmd_line = ["fzf", f'--prompt="{prompt} "']
-    else:
-        cmd_line = ["fzf"]
+        cmd_line.append(f'--prompt="{prompt} "')
+    cmd_line.append("--delimiter=:")
+    cmd_line.append("--with-nth=2..")
     val = subprocess.run(
         cmd_line,
-        input="\n".join(input),
+        input=fzfInput,
         text=True,
         capture_output=True,
     ).stdout.strip()
     if not val:
-        raise KeyboardInterrupt("Aborted.")
-    return val
+        raise KeyboardInterrupt("Aborted or `fzf` failed.")
+    return val.split(":")[0]
 
 
 def get_short_uuid():
