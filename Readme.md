@@ -33,6 +33,7 @@ If you add the alias to your `ZSHRC/BASHRC`, make sure to link to the Python bin
 - `task print`: Pretty print the current week into `${ARCHIVE_DIR}/KW_${XX}.md` + stdout, where `XX` is the current calendar week.
 - `task push`: Upload unlogged files to Harvest
 - `task pull`: Sync remote data (clients, projects, tasks) to local db
+- `task split`: Split a portion off the last task and re-assign it
 
 On each `task` invocation that changes the current task: 
 - Print the current task + time running to a file for the OS statusbar
