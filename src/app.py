@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict
 from peewee import fn
 
@@ -38,6 +38,10 @@ def get_weeks_tasks(KW=None):
 
 def get_task(uuid) -> Task:
     return Task.select().where(Task.uuid == uuid)[0]
+
+
+def get_last_task() -> Task:
+    return Task.select().order_by(Task.start_time.desc()).limit(1)[0]
 
 
 def add_task(task_data: Dict[str, str | datetime | bool | None]):
@@ -97,14 +101,14 @@ def start_task(name: str, taskId=None, projectId=None):
 def extend_task():
     assert not is_task_running(), "There's currently a task running!"
 
-    task = Task.select().order_by(Task.start_time.desc()).limit(1)[0]
+    task = get_last_task()
     task.end_time = None
     task.save()
     print(f'Set task "{task.name}" {task.uuid} to running.')
 
 
 def rename_task(task_name):
-    task = Task.select().order_by(Task.start_time.desc()).limit(1)[0]
+    task = get_last_task()
     old_name = task.name
     task.name = task_name
     task.save()
@@ -115,7 +119,7 @@ def rename_task(task_name):
 def abort_task():
     assert is_task_running(), "No task currently running!"
 
-    task = Task.select().order_by(Task.start_time.desc()).limit(1)[0]
+    task = get_last_task()
     name = task.name
     task.delete_instance()
 
@@ -125,7 +129,7 @@ def abort_task():
 def stop_task():
     assert is_task_running(), "No task currently running!"
 
-    task = Task.select().order_by(Task.start_time.desc()).limit(1)[0]
+    task = get_last_task()
     task.end_time = datetime.now()
     task.save()
 
@@ -233,7 +237,7 @@ def update_statusbar():
     if not is_task_running():
         output = ""
     else:
-        task = Task.select().order_by(Task.start_time.desc()).limit(1)[0]
+        task = get_last_task()
         output = task.name + " since " + task.start_time.strftime("%-H:%M")
     with open(STATUSBAR_FILE, "w") as f:
         f.write(output)
@@ -280,7 +284,7 @@ def show_status():
     if not is_task_running():
         print("No task currently running!")
         return
-    task = Task.select().order_by(Task.start_time.desc()).limit(1)[0]
+    task = get_last_task()
     diff_mins = int(((datetime.now() - task.start_time).total_seconds() % 3600) // 60)
     start_time = task.start_time.strftime("%-H:%M")
     print(
@@ -294,7 +298,7 @@ def assign_task():
     projectId = fzf({x.projectId: x.name for x in client.projects}, "Project?")
     project = HarvestProject.select().where(HarvestProject.projectId == projectId)[0]
     taskId = fzf({x.taskId: x.name for x in project.tasks}, "Task?")
-    task = Task.select().order_by(Task.start_time.desc()).limit(1)[0]
+    task = get_last_task()
 
     task.projectId = projectId
     task.taskId = taskId
@@ -318,6 +322,35 @@ def pull_harvest_data():
     sync_weekly_harvest_hours()
     update_local_harvest_db()
     print("Updated local db + weekly hours.")
+
+
+def split_task(newName: str):
+    current = get_last_task()
+    if is_task_running():
+        endTimeCurrent = datetime.now()
+        endTimeNew = None
+    else:
+        endTimeCurrent = current.end_time
+        endTimeNew = current.end_time
+    runtime = int(((endTimeCurrent - current.start_time).total_seconds()) / 60)
+    mins = int(input("How many minutes of the last task should be re-assigned?"))
+    assert (
+        mins < runtime
+    ), f"Need to provide a split lower than the current runtime ({mins} mins)"
+    splitTime = current.start_time + timedelta(minutes=mins)
+    current.end_time = splitTime
+    current.save()
+    new_task_data = {
+        "uuid": get_short_uuid(),
+        "start_time": splitTime,
+        "end_time": endTimeNew,
+        "name": newName,
+        "is_logged": False,
+        "taskId": None,
+        "projectId": None,
+    }
+    add_task(new_task_data)
+    assign_task()
 
 
 def main():
@@ -366,6 +399,8 @@ def main():
         "--kw", type=int, help="Calendar week to print for.", default=None
     )
     subparsers.add_parser("push", help="Upload unlogged tasks to Harvest")
+    split_parser = subparsers.add_parser("split", help="Partially re-assign last task")
+    split_parser.add_argument("task_name", help="New name of the task")
 
     args = parser.parse_args()
 
@@ -416,6 +451,8 @@ def main():
                 print_week(args.kw)
             case "assign":
                 assign_task()
+            case "split":
+                split_task(args.task_name)
             case _:
                 print_week()
 
