@@ -325,17 +325,24 @@ def pull_harvest_data():
 
 def split_task(newName: str):
     current = get_last_task()
-    runtime = int(((datetime.now() - current.start_time).total_seconds()) / 60)
+    if is_task_running():
+        endTimeCurrent = datetime.now()
+        endTimeNew = None
+    else:
+        endTimeCurrent = current.end_time
+        endTimeNew = current.end_time
+    runtime = int(((endTimeCurrent - current.start_time).total_seconds()) / 60)
     mins = int(input("How many minutes of the last task should be re-assigned?"))
     assert (
         mins < runtime
     ), f"Need to provide a split lower than the current runtime ({mins} mins)"
     splitTime = current.start_time + timedelta(minutes=mins)
     current.end_time = splitTime
+    current.save()
     new_task_data = {
         "uuid": get_short_uuid(),
         "start_time": splitTime,
-        "end_time": None,
+        "end_time": endTimeNew,
         "name": newName,
         "is_logged": False,
         "taskId": None,
