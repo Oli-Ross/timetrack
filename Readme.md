@@ -1,6 +1,8 @@
 # Time tracking tool
 
 A simple tool to track working hours by task via CLI.
+The tracked tasks can be pushed to Harvest. The hours worked in that week will be pulled back, however purposefully,
+edits on Harvest are not synced back locally.
 
 ## Setup 
 
