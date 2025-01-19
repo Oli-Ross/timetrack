@@ -357,6 +357,12 @@ def split_task(newName: str):
     assign_task()
 
 
+def setup():
+    with db:
+        db.create_tables([HarvestClient, Task, LogHistory, HarvestMeta, HarvestProject])
+        pull_harvest_data()
+
+
 def main():
     parser = argparse.ArgumentParser(description="Time logging tool")
     parser.add_argument(
@@ -405,6 +411,7 @@ def main():
     subparsers.add_parser("push", help="Upload unlogged tasks to Harvest")
     split_parser = subparsers.add_parser("split", help="Partially re-assign last task")
     split_parser.add_argument("task_name", help="New name of the task")
+    subparsers.add_parser("setup", help="Initialize the database (first-time only)")
 
     args = parser.parse_args()
 
@@ -457,6 +464,8 @@ def main():
                 assign_task()
             case "split":
                 split_task(args.task_name)
+            case "setup":
+                setup()
             case _:
                 print_week()
 

@@ -12,6 +12,13 @@ pip install -e .
 alias task="$(which python) $(realpath src/app.py)"
 ```
 
+Then set up your environment as needed (see [Config section](#config))
+
+To initialize the SQLite database:
+```bash
+task setup
+```
+
 Then run with `task ${SUBCOMMAND}`.
 If you add the alias to your `ZSHRC/BASHRC`, make sure to link to the Python binary of the virtual environment.
 [fzf](https://github.com/junegunn/fzf) is needed for interaction, make sure that `fzf` is available in your path.
