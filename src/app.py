@@ -154,7 +154,11 @@ def show_task(task: Task, showDate=False, showWeekDay=True):
         end_time = task.end_time.strftime(" - %H:%M")
     else:
         end_time = " - ?    "
-    return start_time + end_time + f" {task.name}"
+    if task.is_logged:
+        logStatus = ""
+    else:
+        logStatus = "*"
+    return start_time + end_time + f" {task.name}" + logStatus
 
 
 def get_unlogged_tasks():
@@ -274,8 +278,6 @@ def print_week(KW=None):
             current_weekday = start.strftime("%a")
             output += weekday_heading
         output += show_task(task, showWeekDay=False)
-        if not task.is_logged:
-            output += "*"
         output += "\n"
 
     CURRENT_WEEK_FILE = ARCHIVE_DIR / f"KW_{this_week}.md"
@@ -454,6 +456,15 @@ def add_old_task():
     assign_task()
 
 
+def delete_task():
+    tasks = get_weeks_tasks()
+    uuid = fzf(
+        {task.uuid: show_task(task) for task in tasks}, prompt="Which task to delete?"
+    )
+    task = Task.select().where(Task.uuid == uuid).limit(1)[0]
+    task.delete_instance()
+
+
 def main():
     parser = argparse.ArgumentParser(description="Time logging tool")
     parser.add_argument(
@@ -505,6 +516,7 @@ def main():
     subparsers.add_parser("setup", help="Initialize the database (first-time only)")
     subparsers.add_parser("edit", help="Edit a task")
     subparsers.add_parser("add", help="Add a task")
+    subparsers.add_parser("delete", help="Delete a task")
 
     args = parser.parse_args()
 
@@ -563,6 +575,8 @@ def main():
                 edit_task()
             case "add":
                 add_old_task()
+            case "delete":
+                delete_task()
             case _:
                 print_week()
 
