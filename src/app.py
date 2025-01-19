@@ -39,8 +39,10 @@ def get_weeks_tasks(KW=None):
 def get_task(uuid) -> Task:
     return Task.select().where(Task.uuid == uuid)[0]
 
+
 def get_last_task() -> Task:
     return Task.select().order_by(Task.start_time.desc()).limit(1)[0]
+
 
 def add_task(task_data: Dict[str, str | datetime | bool | None]):
     Task.create(**task_data)
@@ -320,12 +322,15 @@ def pull_harvest_data():
     update_local_harvest_db()
     print("Updated local db + weekly hours.")
 
-def split_task(newName:str):
+
+def split_task(newName: str):
     current = get_last_task()
     runtime = int(((datetime.now() - current.start_time).total_seconds()) / 60)
     mins = int(input("How many minutes of the last task should be re-assigned?"))
-    assert mins < runtime, f"Need to provide a split lower than the current runtime ({mins} mins)"
-    splitTime = current.start_time + timedelta(minutes=mins) 
+    assert (
+        mins < runtime
+    ), f"Need to provide a split lower than the current runtime ({mins} mins)"
+    splitTime = current.start_time + timedelta(minutes=mins)
     current.end_time = splitTime
     new_task_data = {
         "uuid": get_short_uuid(),
@@ -386,7 +391,8 @@ def main():
         "--kw", type=int, help="Calendar week to print for.", default=None
     )
     subparsers.add_parser("push", help="Upload unlogged tasks to Harvest")
-    subparsers.add_parser("split", help="Partially re-assign last task")
+    split_parser = subparsers.add_parser("split", help="Partially re-assign last task")
+    split_parser.add_argument("task_name", help="New name of the task")
 
     args = parser.parse_args()
 
@@ -438,7 +444,7 @@ def main():
             case "assign":
                 assign_task()
             case "split":
-                split_task()
+                split_task(args.task_name)
             case _:
                 print_week()
 
