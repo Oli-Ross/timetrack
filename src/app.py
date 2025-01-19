@@ -20,6 +20,7 @@ from utils import (
     get_iso_week_dates,
     get_short_uuid,
     get_task_lengths_in_mins,
+    daterange,
 )
 from env import ARCHIVE_DIR, STATUSBAR_FILE
 
@@ -408,6 +409,51 @@ def edit_task():
     task.save()
 
 
+def add_old_task():
+    this_week = str(datetime.today().date().isocalendar()[1])
+    this_year = str(datetime.today().date().isocalendar()[0])
+    start_date, end_date = get_iso_week_dates(this_year, this_week)
+    print(start_date)
+    print(end_date)
+    breakpoint()
+    week = {}
+    weekDayMap = {
+        0: "Monday",
+        1: "Tuesday",
+        2: "Wednesday",
+        3: "Thursday",
+        4: "Friday",
+        5: "Saturday",
+        6: "Sunday",
+    }
+    weekdayformat = "%Y-%m-%d"
+    for single_date in daterange(start_date, end_date):
+        week[single_date.strftime(weekdayformat)] = weekDayMap[single_date.weekday()]
+    weekday = fzf(week, "Select weekday:")
+    name = input("Name? ")
+    print("Enter start time:")
+    hourStart, minuteStart = get_time_from_user()
+    start_time = datetime.strptime(weekday, weekdayformat) + timedelta(
+        hours=hourStart, minutes=minuteStart
+    )
+    print("Enter end time:")
+    hourEnd, minuteEnd = get_time_from_user()
+    end_time = datetime.strptime(weekday, weekdayformat) + timedelta(
+        hours=hourEnd, minutes=minuteEnd
+    )
+    task_data = {
+        "uuid": get_short_uuid(),
+        "start_time": start_time,
+        "end_time": end_time,
+        "name": name,
+        "is_logged": False,
+        "taskId": None,
+        "projectId": None,
+    }
+    add_task(task_data)
+    assign_task()
+
+
 def main():
     parser = argparse.ArgumentParser(description="Time logging tool")
     parser.add_argument(
@@ -458,6 +504,7 @@ def main():
     split_parser.add_argument("task_name", help="New name of the task")
     subparsers.add_parser("setup", help="Initialize the database (first-time only)")
     subparsers.add_parser("edit", help="Edit a task")
+    subparsers.add_parser("add", help="Add a task")
 
     args = parser.parse_args()
 
@@ -514,6 +561,8 @@ def main():
                 setup()
             case "edit":
                 edit_task()
+            case "add":
+                add_old_task()
             case _:
                 print_week()
 

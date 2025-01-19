@@ -1,5 +1,5 @@
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import subprocess
 from typing import List, Dict
 from model import Task
@@ -15,6 +15,12 @@ def get_task_length_in_mins(task: Task):
 
 def get_task_lengths_in_mins(tasks: List[Task]):
     return sum([get_task_length_in_mins(task) for task in tasks])
+
+
+def daterange(start_date: date, end_date: date):
+    days = int((end_date - start_date).days)
+    for n in range(days):
+        yield start_date + timedelta(days=n)
 
 
 def get_iso_week_dates(iso_year, iso_week):

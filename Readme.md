@@ -44,6 +44,7 @@ If you add the alias to your `ZSHRC/BASHRC`, make sure to link to the Python bin
 - `task pull`: Sync remote data (clients, projects, tasks) to local db
 - `task split`: Split a portion off the last task and re-assign it
 - `task edit`: Interactively edit any field of a task
+- `task add`: Interactively edit a task retroactively
 
 On each `task` invocation that changes the current task: 
 - Print the current task + time running to a file for the OS statusbar
