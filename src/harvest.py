@@ -88,60 +88,56 @@ def update_local_harvest_db():
                 )
 
 
-def push_tasks(unloggedTasks):
-    assert unloggedTasks
+def push_task(task):
     assert all(
         var is not None for var in (EMAIL, HARVEST_ACCOUNT_ID, HARVEST_TOKEN)
     ), "Environment variable for Harvest upload is missing."
+    time_spent = get_task_length_in_mins(task) / 60
+    spent_date = task.start_time.strftime("%Y-%m-%d")
+    hours = f"{time_spent:.2f}"
+    notes = task.name
+    defaultUsed = False
+    if task.taskId:
+        task_id = task.taskId
+    else:
+        task_id = TASK_ID
+        defaultUsed = True
+    if task.projectId:
+        project_id = task.projectId
+    else:
+        project_id = PROJECT_ID
+        defaultUsed = True
+    if defaultUsed:
+        print(
+            f'Task "{task.name}" with UUID {task.uuid} has missing task info + is pushed as default task.'
+        )
 
-    for task in unloggedTasks:
-        time_spent = get_task_length_in_mins(task) / 60
+    data = {
+        "spent_date": spent_date,
+        "hours": hours,
+        "notes": notes,
+        "project_id": project_id,
+        "task_id": task_id,
+    }
+    data = urllib.parse.urlencode(data).encode("ascii")
 
-        spent_date = task.start_time.strftime("%Y-%m-%d")
-        hours = f"{time_spent:.2f}"
-        notes = task.name
-        defaultUsed = False
-        if task.taskId:
-            task_id = task.taskId
-        else:
-            task_id = TASK_ID
-            defaultUsed = True
-        if task.projectId:
-            project_id = task.projectId
-        else:
-            project_id = PROJECT_ID
-            defaultUsed = True
-        if defaultUsed:
-            print(
-                f'Task "{task.name}" with UUID {task.uuid} has missing task info + is pushed as default task.'
+    url = "https://api.harvestapp.com/v2/time_entries"
+    headers = {
+        "User-Agent": f"MyIntegration ({EMAIL})",
+        "Authorization": "Bearer " + str(HARVEST_TOKEN),
+        "Harvest-Account-Id": str(HARVEST_ACCOUNT_ID),
+    }
+
+    request = urllib.request.Request(url=url, headers=headers, data=data)
+    with urllib.request.urlopen(request, timeout=5) as response:
+        responseCode = response.getcode()
+        if responseCode != 201:
+            responseBody = response.read().decode("utf-8")
+            jsonResponse = json.loads(responseBody)
+            print(json.dumps(jsonResponse, sort_keys=True, indent=2))
+            raise Exception(
+                f"Request failed: Couldn't push task {task.uuid} to Harvest."
             )
-
-        data = {
-            "spent_date": spent_date,
-            "hours": hours,
-            "notes": notes,
-            "project_id": project_id,
-            "task_id": task_id,
-        }
-        data = urllib.parse.urlencode(data).encode("ascii")
-
-        url = "https://api.harvestapp.com/v2/time_entries"
-        headers = {
-            "User-Agent": f"MyIntegration ({EMAIL})",
-            "Authorization": "Bearer " + str(HARVEST_TOKEN),
-            "Harvest-Account-Id": str(HARVEST_ACCOUNT_ID),
-        }
-
-        request = urllib.request.Request(url=url, headers=headers, data=data)
-        with urllib.request.urlopen(request, timeout=5) as response:
-            responseCode = response.getcode()
-            if responseCode != 201:
-                responseBody = response.read().decode("utf-8")
-                jsonResponse = json.loads(responseBody)
-                print(json.dumps(jsonResponse, sort_keys=True, indent=2))
-                raise Exception(
-                    f"Request failed: Couldn't push task {task.uuid} to Harvest."
-                )
 
 
 def sync():

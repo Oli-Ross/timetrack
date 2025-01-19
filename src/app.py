@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from typing import Dict
 from peewee import fn
 
-from harvest import push_tasks, sync_weekly_harvest_hours, update_local_harvest_db
+from harvest import push_task, sync_weekly_harvest_hours, update_local_harvest_db
 from model import (
     HarvestClient,
     Task,
@@ -312,8 +312,12 @@ def push_unlogged_tasks():
     if not unloggedTasks:
         print("No tasks to be uploaded.")
         return
-    push_tasks(unloggedTasks)
-    log_tasks()
+    LogHistory.delete().execute()
+    for task in unloggedTasks:
+        push_task(task)
+        task.is_logged = True
+        task.save()
+        LogHistory.create(uuid=task.uuid)
     sync_weekly_harvest_hours()
     print("Successfully pushed all unlogged tasks.")
 
