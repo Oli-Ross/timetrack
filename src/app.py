@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict
 from peewee import fn
 
@@ -320,6 +320,25 @@ def pull_harvest_data():
     update_local_harvest_db()
     print("Updated local db + weekly hours.")
 
+def split_task(newName:str):
+    current = get_last_task()
+    runtime = int(((datetime.now() - current.start_time).total_seconds()) / 60)
+    mins = int(input("How many minutes of the last task should be re-assigned?"))
+    assert mins < runtime, f"Need to provide a split lower than the current runtime ({mins} mins)"
+    splitTime = current.start_time + timedelta(minutes=mins) 
+    current.end_time = splitTime
+    new_task_data = {
+        "uuid": get_short_uuid(),
+        "start_time": splitTime,
+        "end_time": None,
+        "name": newName,
+        "is_logged": False,
+        "taskId": None,
+        "projectId": None,
+    }
+    add_task(new_task_data)
+    assign_task()
+
 
 def main():
     parser = argparse.ArgumentParser(description="Time logging tool")
@@ -367,6 +386,7 @@ def main():
         "--kw", type=int, help="Calendar week to print for.", default=None
     )
     subparsers.add_parser("push", help="Upload unlogged tasks to Harvest")
+    subparsers.add_parser("split", help="Partially re-assign last task")
 
     args = parser.parse_args()
 
@@ -417,6 +437,8 @@ def main():
                 print_week(args.kw)
             case "assign":
                 assign_task()
+            case "split":
+                split_task()
             case _:
                 print_week()
 
