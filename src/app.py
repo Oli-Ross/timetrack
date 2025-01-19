@@ -39,6 +39,8 @@ def get_weeks_tasks(KW=None):
 def get_task(uuid) -> Task:
     return Task.select().where(Task.uuid == uuid)[0]
 
+def get_last_task() -> Task:
+    return Task.select().order_by(Task.start_time.desc()).limit(1)[0]
 
 def add_task(task_data: Dict[str, str | datetime | bool | None]):
     Task.create(**task_data)
@@ -97,14 +99,14 @@ def start_task(name: str, taskId=None, projectId=None):
 def extend_task():
     assert not is_task_running(), "There's currently a task running!"
 
-    task = Task.select().order_by(Task.start_time.desc()).limit(1)[0]
+    task = get_last_task()
     task.end_time = None
     task.save()
     print(f'Set task "{task.name}" {task.uuid} to running.')
 
 
 def rename_task(task_name):
-    task = Task.select().order_by(Task.start_time.desc()).limit(1)[0]
+    task = get_last_task()
     old_name = task.name
     task.name = task_name
     task.save()
@@ -115,7 +117,7 @@ def rename_task(task_name):
 def abort_task():
     assert is_task_running(), "No task currently running!"
 
-    task = Task.select().order_by(Task.start_time.desc()).limit(1)[0]
+    task = get_last_task()
     name = task.name
     task.delete_instance()
 
@@ -125,7 +127,7 @@ def abort_task():
 def stop_task():
     assert is_task_running(), "No task currently running!"
 
-    task = Task.select().order_by(Task.start_time.desc()).limit(1)[0]
+    task = get_last_task()
     task.end_time = datetime.now()
     task.save()
 
@@ -233,7 +235,7 @@ def update_statusbar():
     if not is_task_running():
         output = ""
     else:
-        task = Task.select().order_by(Task.start_time.desc()).limit(1)[0]
+        task = get_last_task()
         output = task.name + " since " + task.start_time.strftime("%-H:%M")
     with open(STATUSBAR_FILE, "w") as f:
         f.write(output)
@@ -280,7 +282,7 @@ def show_status():
     if not is_task_running():
         print("No task currently running!")
         return
-    task = Task.select().order_by(Task.start_time.desc()).limit(1)[0]
+    task = get_last_task()
     diff_mins = int(((datetime.now() - task.start_time).total_seconds() % 3600) // 60)
     start_time = task.start_time.strftime("%-H:%M")
     print(
@@ -294,7 +296,7 @@ def assign_task():
     projectId = fzf({x.projectId: x.name for x in client.projects}, "Project?")
     project = HarvestProject.select().where(HarvestProject.projectId == projectId)[0]
     taskId = fzf({x.taskId: x.name for x in project.tasks}, "Task?")
-    task = Task.select().order_by(Task.start_time.desc()).limit(1)[0]
+    task = get_last_task()
 
     task.projectId = projectId
     task.taskId = taskId
