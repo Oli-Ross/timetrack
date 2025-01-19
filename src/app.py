@@ -12,6 +12,7 @@ from model import (
     LogHistory,
     HarvestMeta,
     HarvestProject,
+    HarvestTask,
 )
 from db_config import db
 from utils import (
@@ -359,7 +360,9 @@ def split_task(newName: str):
 
 def setup():
     with db:
-        db.create_tables([HarvestClient, Task, LogHistory, HarvestMeta, HarvestProject])
+        db.create_tables(
+            [HarvestClient, Task, LogHistory, HarvestMeta, HarvestProject, HarvestTask]
+        )
         pull_harvest_data()
 
 
