@@ -2,7 +2,7 @@
 
 import argparse
 from datetime import datetime, timedelta
-from typing import Dict
+from typing import Dict, Tuple
 from peewee import fn
 
 from harvest import push_task, sync_weekly_harvest_hours, update_local_harvest_db
@@ -31,8 +31,10 @@ def get_weeks_tasks(KW=None):
         this_week = str(datetime.today().date().isocalendar()[1])
     this_year = str(datetime.today().date().isocalendar()[0])
     start_date, end_date = get_iso_week_dates(this_year, this_week)
-    tasks = Task.select().where(
-        (Task.start_time >= start_date) & (Task.start_time <= end_date)
+    tasks = (
+        Task.select()
+        .where((Task.start_time >= start_date) & (Task.start_time <= end_date))
+        .order_by(Task.start_time)
     )
     return tasks
 
@@ -293,13 +295,16 @@ def show_status():
     )
 
 
-def assign_task():
+def assign_task(uuid=None):
     clientId = fzf({x.clientId: x.name for x in HarvestClient.select()}, "Client?")
     client = HarvestClient.select().where(HarvestClient.clientId == clientId)[0]
     projectId = fzf({x.projectId: x.name for x in client.projects}, "Project?")
     project = HarvestProject.select().where(HarvestProject.projectId == projectId)[0]
     taskId = fzf({x.taskId: x.name for x in project.tasks}, "Task?")
-    task = get_last_task()
+    if uuid:
+        task = get_task(uuid)
+    else:
+        task = get_last_task()
 
     task.projectId = projectId
     task.taskId = taskId
@@ -366,6 +371,43 @@ def setup():
         pull_harvest_data()
 
 
+def get_time_from_user() -> Tuple[int, int]:
+    inp = input("In format %H:%M, which time? ").split(":")
+    return int(inp[0]), int(inp[1])
+
+
+def edit_task():
+    tasks = get_weeks_tasks()
+    uuid = fzf({task.uuid: show_task(task) for task in tasks}, prompt="Which task?")
+    task = [task for task in tasks if task.uuid == uuid][0]
+    field = fzf(
+        {
+            "name": "name",
+            "start time": "start time",
+            "end time": "end time",
+            "assignment": "assignment",
+        },
+        "Which field to edit?",
+    )
+    match field:
+        case "assignment":
+            assign_task(uuid)
+            return
+        case "name":
+            task.name = input("New name? ")
+        case "start time":
+            hour, minute = get_time_from_user()
+            task.start_time = task.start_time.replace(hour=hour)
+            task.start_time = task.start_time.replace(minute=minute)
+        case "end time":
+            hour, minute = get_time_from_user()
+            task.end_time = task.end_time.replace(hour=hour)
+            task.end_time = task.end_time.replace(minute=minute)
+        case _:
+            raise ValueError("Something went wrong.")
+    task.save()
+
+
 def main():
     parser = argparse.ArgumentParser(description="Time logging tool")
     parser.add_argument(
@@ -415,6 +457,7 @@ def main():
     split_parser = subparsers.add_parser("split", help="Partially re-assign last task")
     split_parser.add_argument("task_name", help="New name of the task")
     subparsers.add_parser("setup", help="Initialize the database (first-time only)")
+    subparsers.add_parser("edit", help="Edit a task")
 
     args = parser.parse_args()
 
@@ -469,6 +512,8 @@ def main():
                 split_task(args.task_name)
             case "setup":
                 setup()
+            case "edit":
+                edit_task()
             case _:
                 print_week()
 
