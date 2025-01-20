@@ -1,8 +1,9 @@
 # Time tracking tool
 
 A simple tool to track working hours by task via CLI.
-The tracked tasks can be pushed to Harvest. The hours worked in that week will be pulled back, however purposefully,
-edits on Harvest are not synced back locally.
+The tracked tasks can be pushed to Harvest. The hours worked in that week will be pulled back. 
+However, edits on Harvest are not synced back.
+This allows you to edit the final remote timesheet without having to maintain a 1:1 relationship with the local db.
 
 ## Setup 
 
@@ -14,43 +15,19 @@ pip install -e .
 alias task="$(which python) $(realpath src/app.py)"
 ```
 
-Then set up your environment as needed (see [Config section](#config))
+Then set up your environment as needed (see [Config section](#config)).
 
 To initialize the SQLite database:
 ```bash
 task setup
 ```
 
-Then run with `task ${SUBCOMMAND}`.
 If you add the alias to your `ZSHRC/BASHRC`, make sure to link to the Python binary of the virtual environment.
 [fzf](https://github.com/junegunn/fzf) is needed for interaction, make sure that `fzf` is available in your path.
 
-## CLI interface
+## Basic usage / CLI interface
 
-- `task status`: Show the currently running task: start time, duration, name
-- `task start NAME`: Start a new task with the name `NAME`, abort with error if one is running
-- `task rename NAME`: Rename last task to `NAME`
-- `task next NAME`: Start a new task with the name `NAME`, end any running tasks
-- `task extend`: Set the last stopped task to running
-- `task resume`: Start a new instance of a past task
-- `task assign`: Interactively select a Harvest project + task to assign to the latest task. Requires `fzf`
-- `task stop`: End the current task
-- `task abort`: Discard the current task
-- `task log`: Mark all tasks logged up to including the last task that was ended and show all tasks who's status changed
-- `task unlog`: Undo the last call to `task log`
-- `task show {all, today, unlogged}`: Only show tasks that are from this day/unlogged
-- `task print`: Pretty print the current week into `${ARCHIVE_DIR}/KW_${XX}.md` + stdout, where `XX` is the current calendar week.
-- `task push`: Upload unlogged files to Harvest
-- `task pull`: Sync remote data (clients, projects, tasks) to local db
-- `task split`: Split a portion off the last task and re-assign it
-- `task edit`: Interactively edit any field of a task
-- `task add`: Interactively edit a task retroactively
-- `task delete`: Interactively delete a task
-
-On each `task` invocation that changes the current task: 
-- Print the current task + time running to a file for the OS statusbar
-
-Using `-d` will dump the entire database for debugging purposes.
+See [Doc.md](./Doc.md) for documentation on how to use the CLI.
 
 ## Config
 
