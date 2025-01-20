@@ -1,7 +1,8 @@
 # Time tracking tool
 
 A simple tool to track working hours by task via CLI.
-The tracked tasks can be pushed to Harvest. The hours worked in that week will be pulled back. 
+The tracked tasks can be pushed to Harvest (you will prompted to interactively select which Harvest project/task to assign a
+task to). The hours worked in that week will be synced back. 
 However, edits on Harvest are not synced back.
 This allows you to edit the final remote timesheet without having to maintain a 1:1 relationship with the local db.
 
