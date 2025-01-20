@@ -413,6 +413,7 @@ def edit_task():
         case _:
             raise ValueError("Something went wrong.")
     task.save()
+    update_statusbar()
 
 
 def add_old_task():
