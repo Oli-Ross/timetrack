@@ -262,13 +262,17 @@ def print_week(KW=None):
     else:
         this_week = str(KW)
     this_year = str(datetime.today().date().isocalendar()[0])
-    total_mins = get_task_lengths_in_mins(weekTasks)
-    hours = total_mins // 60
-    mins = total_mins % 60
+    hours_local = get_task_lengths_in_mins(weekTasks) / 60
     if len(this_week) == 1:
         this_week: str = "0" + this_week
     hours_harvest = HarvestMeta.select().limit(1)[0].hours
-    output += f"# KW {this_week} / {this_year} ({hours:02}:{mins:02} spent, {hours_harvest} in Harvest)\n"
+    hours_unlogged = get_task_lengths_in_mins(get_unlogged_tasks()) / 60
+    output += f"# KW {this_week} / {this_year}\n\n"
+    output += f"\t{hours_local:.2f} tracked locally\n"
+    output += f"\t{hours_harvest:.2f} in Harvest\n"
+    output += f"\t{hours_unlogged:.2f} unlogged locally\n"
+    output += f"\t--------------------\n"
+    output += f"\t{hours_harvest + hours_unlogged:.2f} worked\n"
 
     current_weekday = ""
     for task in tasks:
