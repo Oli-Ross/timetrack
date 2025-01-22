@@ -441,7 +441,6 @@ def add_old_task():
     start_date, end_date = get_iso_week_dates(this_year, this_week)
     print(start_date)
     print(end_date)
-    breakpoint()
     week = {}
     weekDayMap = {
         0: "Monday",
