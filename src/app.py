@@ -308,6 +308,7 @@ def assign_task(uuid=None):
     projectId = fzf({x.projectId: x.name for x in client.projects}, "Project?")
     project = HarvestProject.select().where(HarvestProject.projectId == projectId)[0]
     taskId = fzf({x.taskId: x.name for x in project.tasks}, "Task?")
+    harvestTask = HarvestTask.select().where(HarvestTask.taskId == taskId)[0]
     if uuid:
         task = get_task(uuid)
     else:
@@ -317,7 +318,9 @@ def assign_task(uuid=None):
     task.taskId = taskId
     task.save()
 
-    print(f'Attributed task "{task.name}" to {client.name}/{project.name}/{task.name}.')
+    print(
+        f'Attributed task "{task.name}" to {client.name}/{project.name}/{harvestTask.name}.'
+    )
 
 
 def push_unlogged_tasks():
@@ -351,9 +354,9 @@ def split_task(newName: str):
         endTimeNew = current.end_time
     runtime = int(((endTimeCurrent - current.start_time).total_seconds()) / 60)
     mins = int(input("How many minutes of the last task should be re-assigned?"))
-    assert (
-        mins < runtime
-    ), f"Need to provide a split lower than the current runtime ({mins} mins)"
+    assert mins < runtime, (
+        f"Need to provide a split lower than the current runtime ({mins} mins)"
+    )
     splitTime = current.start_time + timedelta(minutes=mins)
     current.end_time = splitTime
     current.save()
