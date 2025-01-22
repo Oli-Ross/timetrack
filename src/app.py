@@ -650,6 +650,7 @@ def main():
                         delete_preset()
                     case "start":
                         start_preset()
+                        update_statusbar()
                     case "show":
                         show_preset()
             case _:
