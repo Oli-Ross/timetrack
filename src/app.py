@@ -214,19 +214,26 @@ def log_tasks():
         print(show_task(task))
 
 
-def show_db():
-    print("----------------------- Debug output:")
-    for row in Task.select():
-        print(
-            "\n".join(
-                "|".join(f"{value}" for _, value in record.__data__.items())
-                for record in Task.select()
-            )
+def show_single_db(name, database):
+    print("-----------------------")
+    print(f"      {name}")
+    print("-----------------------")
+    print(
+        "\n".join(
+            "|".join(f"{value}" for _, value in record.__data__.items())
+            for record in database.select()
         )
+    )
 
-    print("----------------------- Last logged:")
-    for row in LogHistory.select():
-        print(row)
+
+def show_db():
+    show_single_db("Tasks", Task)
+    show_single_db("Projects", HarvestProject)
+    show_single_db("Clients", HarvestClient)
+    show_single_db("Harvest Tasks", HarvestTask)
+    show_single_db("Last logged", LogHistory)
+    show_single_db("Presets", Preset)
+    show_single_db("Logged hours", HarvestMeta)
 
 
 def show_today_tasks():
