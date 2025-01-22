@@ -569,7 +569,12 @@ def main():
     subparsers.add_parser("status", help="Show info about currently running task")
     subparsers.add_parser("stop", help="Stop current task")
     subparsers.add_parser("pull", help="Sync Harvest data back to local db")
-    subparsers.add_parser("assign", help="Assign last task to Harvest task")
+    assign_parser = subparsers.add_parser(
+        "assign", help="Assign last task to Harvest task"
+    )
+    assign_parser.add_argument(
+        "--uuid", type=str, help="UUID to re-assign", default=None
+    )
     subparsers.add_parser("abort", help="Abort current task")
     subparsers.add_parser("extend", help="Set the last completed task to running")
     subparsers.add_parser("resume", help="Start a new instance of a past task")
@@ -637,7 +642,7 @@ def main():
             case "print":
                 print_week(args.kw)
             case "assign":
-                assign_task()
+                assign_task(args.uuid)
             case "split":
                 split_task(args.task_name)
             case "setup":
