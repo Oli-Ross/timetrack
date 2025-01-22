@@ -13,6 +13,7 @@ from model import (
     HarvestMeta,
     HarvestProject,
     HarvestTask,
+    Preset,
 )
 from db_config import db
 from utils import (
@@ -376,7 +377,15 @@ def split_task(newName: str):
 def setup():
     with db:
         db.create_tables(
-            [HarvestClient, Task, LogHistory, HarvestMeta, HarvestProject, HarvestTask]
+            [
+                HarvestClient,
+                Task,
+                LogHistory,
+                HarvestMeta,
+                HarvestProject,
+                HarvestTask,
+                Preset,
+            ]
         )
         pull_harvest_data()
 
@@ -473,6 +482,52 @@ def delete_task():
     task.delete_instance()
 
 
+def add_preset():
+    name = input("Name? ")
+    clientId = fzf({x.clientId: x.name for x in HarvestClient.select()}, "Client?")
+    client = HarvestClient.select().where(HarvestClient.clientId == clientId)[0]
+    projectId = fzf({x.projectId: x.name for x in client.projects}, "Project?")
+    project = HarvestProject.select().where(HarvestProject.projectId == projectId)[0]
+    taskId = fzf({x.taskId: x.name for x in project.tasks}, "Task?")
+    harvestTask = HarvestTask.select().where(HarvestTask.taskId == taskId)[0]
+    uuid = get_short_uuid()
+    Preset.create(
+        **{"uuid": uuid, "name": name, "project": project, "task": harvestTask}
+    )
+    print(f'Created preset "{name}"')
+
+
+def show_preset():
+    presets = Preset.select()
+    for preset in presets:
+        print(
+            f"{preset.name + ':':15}\t{preset.project.name}/{preset.project.client.name}/{preset.task.name}"
+        )
+
+
+def start_preset():
+    presets = Preset.select()
+    uuid = fzf(
+        {preset.uuid: preset.name for preset in presets},
+        prompt="Which preset to delete?",
+    )
+    preset = Preset.select().where(Preset.uuid == uuid).limit(1)[0]
+    start_task(preset.name, preset.task.taskId, preset.project.projectId)
+    print(f'Started task from preset "{preset.name}"')
+
+
+def delete_preset():
+    presets = Preset.select()
+    uuid = fzf(
+        {preset.uuid: preset.name for preset in presets},
+        prompt="Which preset to delete?",
+    )
+    preset = Preset.select().where(Preset.uuid == uuid).limit(1)[0]
+    name = preset.name
+    preset.delete_instance()
+    print(f'Deleted preset "{preset.name}"')
+
+
 def main():
     parser = argparse.ArgumentParser(description="Time logging tool")
     parser.add_argument(
@@ -525,6 +580,8 @@ def main():
     subparsers.add_parser("edit", help="Edit a task")
     subparsers.add_parser("add", help="Add a task")
     subparsers.add_parser("delete", help="Delete a task")
+    preset_parser = subparsers.add_parser("preset", help="Manage task presets")
+    preset_parser.add_argument("preset_cmd", choices=["add", "delete", "start", "show"])
 
     args = parser.parse_args()
 
@@ -585,6 +642,16 @@ def main():
                 add_old_task()
             case "delete":
                 delete_task()
+            case "preset":
+                match args.preset_cmd:
+                    case "add":
+                        add_preset()
+                    case "delete":
+                        delete_preset()
+                    case "start":
+                        start_preset()
+                    case "show":
+                        show_preset()
             case _:
                 print_week()
 
