@@ -259,29 +259,24 @@ def update_statusbar():
         f.write(output)
 
 
-def print_week(KW=None):
-    output = ""
-    weekTasks = get_weeks_tasks(KW)
-    tasks = []
-    for task in weekTasks:
-        tasks.append(task)
-    if not KW:
-        this_week = str(datetime.today().date().isocalendar()[1])
-    else:
-        this_week = str(KW)
+def get_hour_overview(tasks, KW: str | None = None) -> str:
+    this_week = get_week_string(KW)
     this_year = str(datetime.today().date().isocalendar()[0])
-    hours_local = get_task_lengths_in_mins(weekTasks) / 60
-    if len(this_week) == 1:
-        this_week: str = "0" + this_week
+    hours_local = get_task_lengths_in_mins(tasks) / 60
     hours_harvest = HarvestMeta.select().limit(1)[0].hours
     hours_unlogged = get_task_lengths_in_mins(get_unlogged_tasks()) / 60
+    output = ""
     output += f"# KW {this_week} / {this_year}\n\n"
     output += f"\t{hours_local:.2f} tracked locally\n"
     output += f"\t{hours_harvest:.2f} in Harvest\n"
     output += f"\t{hours_unlogged:.2f} unlogged locally\n"
     output += f"\t--------------------\n"
     output += f"\t{hours_harvest + hours_unlogged:.2f} worked\n"
+    return output
 
+
+def get_tasks_overview(tasks):
+    output = ""
     current_weekday = ""
     for task in tasks:
         start = task.start_time
@@ -291,8 +286,25 @@ def print_week(KW=None):
             output += weekday_heading
         output += show_task(task, showWeekDay=False)
         output += "\n"
+    return output
 
-    CURRENT_WEEK_FILE = ARCHIVE_DIR / f"KW_{this_week}.md"
+
+def get_week_string(KW: str | None = None) -> str:
+    if not KW:
+        this_week = str(datetime.today().date().isocalendar()[1])
+    else:
+        this_week = str(KW)
+    if len(this_week) == 1:
+        this_week: str = "0" + this_week
+    return this_week
+
+
+def print_week(KW=None):
+    weekTasks = get_weeks_tasks(KW)
+    output = get_hour_overview(weekTasks, KW)
+    output += get_tasks_overview(weekTasks)
+
+    CURRENT_WEEK_FILE = ARCHIVE_DIR / f"KW_{get_week_string(KW)}.md"
     with open(CURRENT_WEEK_FILE, "w") as f:
         f.write(output)
     print(output)
