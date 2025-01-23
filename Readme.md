@@ -6,6 +6,10 @@ task to). The hours worked in that week will be synced back.
 However, edits on Harvest are not synced back.
 This allows you to edit the final remote timesheet without having to maintain a 1:1 relationship with the local db.
 
+## Status
+
+This tool is under active development and may be subject to breaking changes.
+
 ## Setup 
 
 Set up venv, install dependencies + package:
