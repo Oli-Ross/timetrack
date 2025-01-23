@@ -302,12 +302,13 @@ def get_week_string(KW: str | None = None) -> str:
 def print_day_summary():
     start_date = datetime.now().date()
     end_date = datetime.now().date() + timedelta(days=1)
-    tasks = (
+    tasksWeek = get_weeks_tasks()
+    tasksToday = (
         Task.select()
         .where((Task.start_time >= start_date) & (Task.start_time <= end_date))
         .order_by(Task.start_time)
     )
-    print(get_hour_overview(tasks) + get_tasks_overview(tasks))
+    print(get_hour_overview(tasksWeek) + get_tasks_overview(tasksToday))
 
 
 def get_week_overview(KW=None):
