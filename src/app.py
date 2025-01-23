@@ -162,10 +162,13 @@ def show_task(task: Task, showDate=False, showWeekDay=True):
     return start_time + end_time + f" {task.name}" + logStatus
 
 
-def get_unlogged_tasks():
-    return Task.select().where(
-        (Task.is_logged == False) & (Task.end_time.is_null(False))
-    )
+def get_unlogged_tasks(includeRunning=False):
+    if includeRunning:
+        return Task.select().where(Task.is_logged == False)
+    else:
+        return Task.select().where(
+            (Task.is_logged == False) & (Task.end_time.is_null(False))
+        )
 
 
 def show_unlogged_tasks():
@@ -264,7 +267,9 @@ def get_hour_overview(tasks, KW: str | None = None) -> str:
     this_year = str(datetime.today().date().isocalendar()[0])
     hours_local = get_task_lengths_in_mins(tasks) / 60
     hours_harvest = HarvestMeta.select().limit(1)[0].hours
-    hours_unlogged = get_task_lengths_in_mins(get_unlogged_tasks()) / 60
+    hours_unlogged = (
+        get_task_lengths_in_mins(get_unlogged_tasks(includeRunning=True)) / 60
+    )
     output = ""
     output += f"# KW {this_week} / {this_year}\n\n"
     output += f"\t{hours_local:.2f} tracked locally\n"
