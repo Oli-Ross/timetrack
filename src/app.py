@@ -307,20 +307,24 @@ def print_day_summary():
         .where((Task.start_time >= start_date) & (Task.start_time <= end_date))
         .order_by(Task.start_time)
     )
-    output = get_hour_overview(tasks)
-    output += get_tasks_overview(tasks)
-    print(output)
+    print(get_hour_overview(tasks) + get_tasks_overview(tasks))
 
 
-def print_week(KW=None):
+def get_week_overview(KW=None):
     weekTasks = get_weeks_tasks(KW)
     output = get_hour_overview(weekTasks, KW)
     output += get_tasks_overview(weekTasks)
+    return output
 
+
+def print_week(KW=None):
+    print(get_week_overview(KW))
+
+
+def archive_week(KW=None):
     CURRENT_WEEK_FILE = ARCHIVE_DIR / f"KW_{get_week_string(KW)}.md"
     with open(CURRENT_WEEK_FILE, "w") as f:
-        f.write(output)
-    print(output)
+        f.write(get_week_overview(KW))
 
 
 def show_status():
@@ -654,6 +658,7 @@ def main():
                 log_tasks()
             case "push":
                 push_unlogged_tasks()
+                archive_week()
             case "pull":
                 pull_harvest_data()
             case "show":
