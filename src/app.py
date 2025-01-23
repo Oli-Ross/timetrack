@@ -299,6 +299,19 @@ def get_week_string(KW: str | None = None) -> str:
     return this_week
 
 
+def print_day_summary():
+    start_date = datetime.now().date()
+    end_date = datetime.now().date() + timedelta(days=1)
+    tasks = (
+        Task.select()
+        .where((Task.start_time >= start_date) & (Task.start_time <= end_date))
+        .order_by(Task.start_time)
+    )
+    output = get_hour_overview(tasks)
+    output += get_tasks_overview(tasks)
+    print(output)
+
+
 def print_week(KW=None):
     weekTasks = get_weeks_tasks(KW)
     output = get_hour_overview(weekTasks, KW)
@@ -677,7 +690,7 @@ def main():
                     case "show":
                         show_preset()
             case _:
-                print_week()
+                print_day_summary()
 
         if args.debug:
             show_db()
