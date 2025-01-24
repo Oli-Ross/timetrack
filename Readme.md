@@ -9,6 +9,7 @@ This allows you to edit the final remote timesheet without having to maintain a 
 ## Status
 
 This tool is under active development and may be subject to breaking changes.
+Check out the [issues page](https://github.com/Oli-Ross/timetrack/issues) for known issues.
 
 ## Setup 
 
