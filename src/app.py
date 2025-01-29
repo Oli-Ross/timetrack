@@ -24,6 +24,7 @@ from utils import (
     daterange,
 )
 from env import ARCHIVE_DIR, STATUSBAR_FILE
+import pretty_print
 
 
 def get_weeks_tasks(KW=None):
@@ -538,10 +539,7 @@ def add_preset():
 
 def show_preset():
     presets = Preset.select()
-    for preset in presets:
-        print(
-            f"{preset.name + ':':15}\t{preset.project.name}/{preset.project.client.name}/{preset.task.name}"
-        )
+    pretty_print.show_presets(presets)
 
 
 def start_preset():
