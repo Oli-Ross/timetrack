@@ -550,7 +550,7 @@ def start_preset():
     presets = Preset.select()
     uuid = fzf(
         {preset.uuid: preset.name for preset in presets},
-        prompt="Which preset to delete?",
+        prompt="Which preset to start?",
     )
     preset = Preset.select().where(Preset.uuid == uuid).limit(1)[0]
     start_task(preset.name, preset.task.taskId, preset.project.projectId)
