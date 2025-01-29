@@ -474,8 +474,6 @@ def add_old_task():
     this_week = str(datetime.today().date().isocalendar()[1])
     this_year = str(datetime.today().date().isocalendar()[0])
     start_date, end_date = get_iso_week_dates(this_year, this_week)
-    print(start_date)
-    print(end_date)
     week = {}
     weekDayMap = {
         0: "Monday",
