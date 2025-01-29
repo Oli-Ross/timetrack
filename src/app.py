@@ -566,7 +566,7 @@ def delete_preset():
     preset = Preset.select().where(Preset.uuid == uuid).limit(1)[0]
     name = preset.name
     preset.delete_instance()
-    print(f'Deleted preset "{preset.name}"')
+    print(f'Deleted preset "{name}"')
 
 
 def main():
