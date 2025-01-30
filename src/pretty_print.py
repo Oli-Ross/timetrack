@@ -43,9 +43,11 @@ def show_summary(
     weekly_table.add_column("Hours")
     weekly_table.add_row("Worked", f"{hours_worked:.1f}")
     if HOURS:
-        hours_open = max(float(HOURS) - hours_worked, 0)
-        doneIndicator = "[red]" if hours_open > 0 else "[green]"
-        weekly_table.add_row("Open", doneIndicator + f"{hours_open:.1f}")
+        open = max(float(HOURS) - hours_worked, 0)
+        doneIndicator = "[red]" if open > 0 else "[green]"
+        hours_open = int(open)
+        minutes_open = int((open - hours_open) * 60)
+        weekly_table.add_row("Open", doneIndicator + f"{hours_open}:{minutes_open:02}")
     weekly_table.add_section()
     weekly_table.add_row("Logged", f"{hours_local:.1f}")
     weekly_table.add_row("Unlogged", f"{hours_unlogged:.1f}")
