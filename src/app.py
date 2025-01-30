@@ -24,6 +24,7 @@ from utils import (
     daterange,
 )
 from env import ARCHIVE_DIR, STATUSBAR_FILE
+from calendar_utils import get_week_string
 import pretty_print
 
 
@@ -295,26 +296,17 @@ def get_tasks_overview(tasks):
     return output
 
 
-def get_week_string(KW: str | None = None) -> str:
-    if not KW:
-        this_week = str(datetime.today().date().isocalendar()[1])
-    else:
-        this_week = str(KW)
-    if len(this_week) == 1:
-        this_week: str = "0" + this_week
-    return this_week
-
-
 def print_day_summary():
     start_date = datetime.now().date()
     end_date = datetime.now().date() + timedelta(days=1)
-    tasksWeek = get_weeks_tasks()
     tasksToday = (
         Task.select()
         .where((Task.start_time >= start_date) & (Task.start_time <= end_date))
         .order_by(Task.start_time)
     )
-    print(get_hour_overview(tasksWeek) + get_tasks_overview(tasksToday))
+    tasksWeek = get_weeks_tasks()
+    tasksUnlogged = get_unlogged_tasks(includeRunning=True)
+    pretty_print.show_summary(tasksToday, tasksWeek, tasksUnlogged)
 
 
 def get_week_overview(KW=None):
