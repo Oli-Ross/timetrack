@@ -31,8 +31,6 @@ def show_presets(presets: List[Preset]):
 def show_summary(
     tasksToday: List[Task], tasksWeek: List[Task], tasksUnlogged: List[Task]
 ):
-    this_year = str(datetime.today().date().isocalendar()[0])
-    this_week = get_week_string()
     hours_harvest = HarvestMeta.select().limit(1)[0].hours
     hours_local = get_task_lengths_in_mins(tasksWeek) / 60
     hours_unlogged = get_task_lengths_in_mins(tasksUnlogged) / 60
@@ -52,6 +50,8 @@ def show_summary(
     weekly_table.add_row("Logged", f"{hours_local:.1f}")
     weekly_table.add_row("Unlogged", f"{hours_unlogged:.1f}")
     weekly_table.add_row("In Harvest", f"{hours_harvest:.1f}")
+    this_year = str(datetime.today().date().isocalendar()[0])
+    this_week = get_week_string()
     weekly_panel = Panel(
         weekly_table,
         title=f"[magenta]Summary {this_week} / {this_year[2:4]}",
@@ -75,7 +75,10 @@ def show_summary(
             f"{start_time} - {end_time}",
             f"{time_elapsed.seconds // 3600}:{(time_elapsed.seconds // 60) % 60:02}",
         )
-    today_panel = Panel(today, title="[magenta]Today's tasks", padding=(1, 1))
+    this_day = datetime.now().strftime("%A")
+    today_panel = Panel(
+        today, title=f"[magenta]Today's tasks ({this_day})", padding=(1, 1)
+    )
 
     columns = Columns([today_panel, weekly_panel])
     Console().print(columns)
