@@ -60,6 +60,7 @@ def show_summary(
 
     today = Table(header_style="green", show_edge=False)
     today.add_column("Name")
+    today.add_column("When")
     today.add_column("Time")
 
     formatString = "%H:%M"
@@ -67,9 +68,14 @@ def show_summary(
     for task in tasksToday:
         start_time = task.start_time.strftime(formatString)
         end_time = task.end_time.strftime(formatString) if task.end_time else "?"
+        time_elapsed = task.end_time - task.start_time
         logIndicator = "" if task.is_logged else "[yellow]"
-        today.add_row(logIndicator + f"{task.name}", f"{start_time} - {end_time}")
+        today.add_row(
+            logIndicator + f"{task.name}",
+            f"{start_time} - {end_time}",
+            f"{time_elapsed.seconds // 3600}:{(time_elapsed.seconds // 60) % 60:02}",
+        )
     today_panel = Panel(today, title="[magenta]Today's tasks", padding=(1, 1))
 
     columns = Columns([today_panel, weekly_panel])
-    console = Console().print(columns)
+    Console().print(columns)
