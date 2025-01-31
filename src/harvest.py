@@ -10,9 +10,9 @@ from env import EMAIL, HARVEST_TOKEN, HARVEST_ACCOUNT_ID, TASK_ID, PROJECT_ID
 
 
 def sync_weekly_harvest_hours(KW=None):
-    assert all(
-        var is not None for var in (EMAIL, HARVEST_ACCOUNT_ID, HARVEST_TOKEN)
-    ), "Environment variable for Harvest upload is missing."
+    assert all(var is not None for var in (EMAIL, HARVEST_ACCOUNT_ID, HARVEST_TOKEN)), (
+        "Environment variable for Harvest upload is missing."
+    )
     with db:
         if KW:
             today = datetime.fromisocalendar(datetime.now().year, KW, 2)
@@ -47,9 +47,9 @@ def sync_weekly_harvest_hours(KW=None):
 
 
 def update_local_harvest_db():
-    assert all(
-        var is not None for var in (EMAIL, HARVEST_ACCOUNT_ID, HARVEST_TOKEN)
-    ), "Environment variable for Harvest upload is missing."
+    assert all(var is not None for var in (EMAIL, HARVEST_ACCOUNT_ID, HARVEST_TOKEN)), (
+        "Environment variable for Harvest upload is missing."
+    )
     url = "https://api.harvestapp.com/v2/users/me/project_assignments"
     headers = {
         "User-Agent": f"MyIntegration ({EMAIL})",
@@ -89,9 +89,9 @@ def update_local_harvest_db():
 
 
 def push_task(task):
-    assert all(
-        var is not None for var in (EMAIL, HARVEST_ACCOUNT_ID, HARVEST_TOKEN)
-    ), "Environment variable for Harvest upload is missing."
+    assert all(var is not None for var in (EMAIL, HARVEST_ACCOUNT_ID, HARVEST_TOKEN)), (
+        "Environment variable for Harvest upload is missing."
+    )
     time_spent = get_task_length_in_mins(task) / 60
     spent_date = task.start_time.strftime("%Y-%m-%d")
     hours = f"{time_spent:.2f}"
@@ -140,7 +140,8 @@ def push_task(task):
             )
 
 
-def sync():
+def pull():
     with db:
         sync_weekly_harvest_hours()
         update_local_harvest_db()
+        print("Updated local db + weekly hours.")

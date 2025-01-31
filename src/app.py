@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from typing import Dict, Tuple
 from peewee import fn
 
-from harvest import push_task, sync_weekly_harvest_hours, update_local_harvest_db
+from harvest import push_task, sync_weekly_harvest_hours, pull
 from model import (
     HarvestClient,
     Task,
@@ -369,12 +369,6 @@ def push_unlogged_tasks():
     print("Successfully pushed all unlogged tasks.")
 
 
-def pull_harvest_data():
-    sync_weekly_harvest_hours()
-    update_local_harvest_db()
-    print("Updated local db + weekly hours.")
-
-
 def split_task(newName: str):
     current = get_last_task()
     if is_task_running():
@@ -417,7 +411,7 @@ def setup():
                 Preset,
             ]
         )
-        pull_harvest_data()
+        pull()
 
 
 def get_time_from_user() -> Tuple[int, int]:
@@ -649,7 +643,7 @@ def main():
                 push_unlogged_tasks()
                 archive_week()
             case "pull":
-                pull_harvest_data()
+                pull()
             case "show":
                 match args.filter:
                     case "today":
