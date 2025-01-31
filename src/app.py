@@ -2,7 +2,7 @@
 
 import argparse
 from datetime import datetime, timedelta
-from typing import Dict, Tuple
+from typing import Tuple
 from peewee import fn
 
 from harvest import push_task, sync_weekly_harvest_hours, pull
@@ -24,6 +24,7 @@ from utils import (
 from calendar_utils import get_iso_week_dates, daterange
 from env import ARCHIVE_DIR, STATUSBAR_FILE
 from calendar_utils import get_week_string
+from task_utils import is_task_running, start_task
 import pretty_print
 
 
@@ -48,10 +49,6 @@ def get_task(uuid) -> Task:
 
 def get_last_task() -> Task:
     return Task.select().order_by(Task.start_time.desc()).limit(1)[0]
-
-
-def is_task_running():
-    return Task.select().where(Task.end_time.is_null(True)).exists()
 
 
 def next_task(name: str):
@@ -81,23 +78,6 @@ def resume_task():
     task = [task for task in tasks if task.uuid == uuid][0]
     print(f"Resuming task {task.name}")
     start_task(task.name, task.taskId, task.projectId)
-
-
-def start_task(name: str, taskId=None, projectId=None):
-    assert not is_task_running(), "There's currently a task running!"
-
-    uuid = get_short_uuid()
-    task_data = {
-        "uuid": uuid,
-        "start_time": datetime.now(),
-        "end_time": None,
-        "name": name,
-        "is_logged": False,
-        "taskId": taskId,
-        "projectId": projectId,
-    }
-    Task.create(**task_data)
-    print(f"Started task with UUID {uuid}.")
 
 
 def extend_task():
@@ -501,49 +481,6 @@ def delete_task():
     )
     task = Task.select().where(Task.uuid == uuid).limit(1)[0]
     task.delete_instance()
-
-
-def add_preset():
-    name = input("Name? ")
-    clientId = fzf({x.clientId: x.name for x in HarvestClient.select()}, "Client?")
-    client = HarvestClient.select().where(HarvestClient.clientId == clientId)[0]
-    projectId = fzf({x.projectId: x.name for x in client.projects}, "Project?")
-    project = HarvestProject.select().where(HarvestProject.projectId == projectId)[0]
-    taskId = fzf({x.taskId: x.name for x in project.tasks}, "Task?")
-    harvestTask = HarvestTask.select().where(HarvestTask.taskId == taskId)[0]
-    uuid = get_short_uuid()
-    Preset.create(
-        **{"uuid": uuid, "name": name, "project": project, "task": harvestTask}
-    )
-    print(f'Created preset "{name}"')
-
-
-def show_preset():
-    presets = Preset.select()
-    pretty_print.show_presets(presets)
-
-
-def start_preset():
-    presets = Preset.select()
-    uuid = fzf(
-        {preset.uuid: preset.name for preset in presets},
-        prompt="Which preset to start?",
-    )
-    preset = Preset.select().where(Preset.uuid == uuid).limit(1)[0]
-    start_task(preset.name, preset.task.taskId, preset.project.projectId)
-    print(f'Started task from preset "{preset.name}"')
-
-
-def delete_preset():
-    presets = Preset.select()
-    uuid = fzf(
-        {preset.uuid: preset.name for preset in presets},
-        prompt="Which preset to delete?",
-    )
-    preset = Preset.select().where(Preset.uuid == uuid).limit(1)[0]
-    name = preset.name
-    preset.delete_instance()
-    print(f'Deleted preset "{name}"')
 
 
 def main():
