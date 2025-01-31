@@ -51,10 +51,6 @@ def get_last_task() -> Task:
     return Task.select().order_by(Task.start_time.desc()).limit(1)[0]
 
 
-def add_task(task_data: Dict[str, str | datetime | bool | None]):
-    Task.create(**task_data)
-
-
 def is_task_running():
     return Task.select().where(Task.end_time.is_null(True)).exists()
 
@@ -73,7 +69,7 @@ def next_task(name: str):
         "taskId": None,
         "projectId": None,
     }
-    add_task(task_data)
+    Task.create(**task_data)
     print(f"Started task with UUID {uuid}.")
 
 
@@ -101,7 +97,7 @@ def start_task(name: str, taskId=None, projectId=None):
         "taskId": taskId,
         "projectId": projectId,
     }
-    add_task(task_data)
+    Task.create(**task_data)
     print(f"Started task with UUID {uuid}.")
 
 
@@ -405,7 +401,7 @@ def split_task(newName: str):
         "taskId": None,
         "projectId": None,
     }
-    add_task(new_task_data)
+    Task.create(**new_task_data)
     assign_task()
 
 
@@ -501,7 +497,7 @@ def add_old_task():
         "taskId": None,
         "projectId": None,
     }
-    add_task(task_data)
+    Task.create(**task_data)
     assign_task()
 
 
