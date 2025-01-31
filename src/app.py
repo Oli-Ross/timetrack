@@ -278,7 +278,7 @@ def print_day_summary():
     )
     tasksWeek = get_weeks_tasks()
     tasksUnlogged = get_unlogged_tasks(includeRunning=True)
-    pretty_print.show_summary(tasksToday, tasksWeek, tasksUnlogged)
+    pretty_print.show_daily_summary(tasksToday, tasksWeek, tasksUnlogged)
 
 
 def get_week_overview(KW=None):

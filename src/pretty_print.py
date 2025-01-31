@@ -28,7 +28,7 @@ def show_presets(presets: List[Preset]):
     Console().print(table)
 
 
-def show_summary(
+def show_daily_summary(
     tasksToday: List[Task], tasksWeek: List[Task], tasksUnlogged: List[Task]
 ):
     hours_harvest = HarvestMeta.select().limit(1)[0].hours
