@@ -25,6 +25,7 @@ from calendar_utils import get_iso_week_dates, daterange
 from env import ARCHIVE_DIR, STATUSBAR_FILE
 from calendar_utils import get_week_string
 from task_utils import is_task_running, start_task
+import preset
 import pretty_print
 
 
@@ -606,14 +607,14 @@ def main():
             case "preset":
                 match args.preset_cmd:
                     case "add":
-                        add_preset()
+                        preset.add_preset()
                     case "delete":
-                        delete_preset()
+                        preset.delete_preset()
                     case "start":
-                        start_preset()
+                        preset.start_preset()
                         update_statusbar()
                     case "show":
-                        show_preset()
+                        preset.show_preset()
             case _:
                 print_day_summary()
 
