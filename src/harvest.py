@@ -8,7 +8,7 @@ from model import HarvestClient, HarvestProject, HarvestTask, HarvestMeta
 from env import EMAIL, HARVEST_TOKEN, HARVEST_ACCOUNT_ID, TASK_ID, PROJECT_ID
 
 
-def sync_weekly_harvest_hours(KW=None):
+def pull_weekly_harvest_hours(KW=None):
     assert all(var is not None for var in (EMAIL, HARVEST_ACCOUNT_ID, HARVEST_TOKEN)), (
         "Environment variable for Harvest upload is missing."
     )
@@ -44,7 +44,7 @@ def sync_weekly_harvest_hours(KW=None):
     HarvestMeta.create(hours=hours)
 
 
-def update_local_harvest_db():
+def pull_projects_clients_tasks():
     assert all(var is not None for var in (EMAIL, HARVEST_ACCOUNT_ID, HARVEST_TOKEN)), (
         "Environment variable for Harvest upload is missing."
     )
@@ -138,6 +138,6 @@ def push_task(task):
 
 
 def pull():
-    sync_weekly_harvest_hours()
-    update_local_harvest_db()
+    pull_weekly_harvest_hours()
+    pull_projects_clients_tasks()
     print("Updated local db + weekly hours.")

@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 from typing import Tuple
 from peewee import fn
 
-from harvest import push_task, sync_weekly_harvest_hours, pull
+from harvest import push_task, pull_weekly_harvest_hours, pull
 from model import (
     HarvestClient,
     Task,
@@ -345,7 +345,7 @@ def push_unlogged_tasks():
         task.is_logged = True
         task.save()
         LogHistory.create(uuid=task.uuid)
-    sync_weekly_harvest_hours()
+    pull_weekly_harvest_hours()
     print("Successfully pushed all unlogged tasks.")
 
 
