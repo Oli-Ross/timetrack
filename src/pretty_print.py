@@ -68,12 +68,14 @@ def show_summary(
     for task in tasksToday:
         start_time = task.start_time.strftime(formatString)
         end_time = task.end_time.strftime(formatString) if task.end_time else "?"
-        time_elapsed = task.end_time - task.start_time
+        time_elapsed = task.end_time - task.start_time if task.end_time else None
         logIndicator = "" if task.is_logged else "[yellow]"
         today.add_row(
             logIndicator + f"{task.name}",
             f"{start_time} - {end_time}",
-            f"{time_elapsed.seconds // 3600}:{(time_elapsed.seconds // 60) % 60:02}",
+            f"{time_elapsed.seconds // 3600}:{(time_elapsed.seconds // 60) % 60:02}"
+            if time_elapsed
+            else "",
         )
     this_day = datetime.now().strftime("%A")
     today_panel = Panel(
