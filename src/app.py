@@ -510,7 +510,10 @@ def main():
     show_parser.add_argument(
         "filter",
         help="Which tasks to show",
-        choices=["all", "today", "unlogged"],
+        choices=["all", "today", "unlogged", "week"],
+    )
+    show_parser.add_argument(
+        "--kw", type=int, help="Calendar week to print for `show week`.", default=None
     )
     subparsers.add_parser("log", help="Mark all tasks as logged")
     subparsers.add_parser(
@@ -528,12 +531,6 @@ def main():
     subparsers.add_parser("abort", help="Abort current task")
     subparsers.add_parser("extend", help="Set the last completed task to running")
     subparsers.add_parser("resume", help="Start a new instance of a past task")
-    print_parser = subparsers.add_parser(
-        "print", help="Print current week in human readable format"
-    )
-    print_parser.add_argument(
-        "--kw", type=int, help="Calendar week to print for.", default=None
-    )
     subparsers.add_parser("push", help="Upload unlogged tasks to Harvest")
     split_parser = subparsers.add_parser("split", help="Partially re-assign last task")
     split_parser.add_argument("task_name", help="New name of the task")
@@ -590,8 +587,8 @@ def main():
                         show_unlogged_tasks()
                     case "all":
                         show_all_tasks()
-            case "print":
-                print(get_week_overview(args.kw))
+                    case "week":
+                        print(get_week_overview(args.kw))
             case "assign":
                 assign_task(args.uuid)
             case "split":

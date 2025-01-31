@@ -18,8 +18,7 @@ You can run `task -h` to get all subcommands or `task {SUBCOMMAND} -h` to get he
 - `task abort`: Discard the current task
 - `task log`: Mark all tasks logged up to including the last task that was ended and show all tasks who's status changed
 - `task unlog`: Undo the last call to `task log`
-- `task show {all, today, unlogged}`: Only show tasks that are from this day/unlogged
-- `task print`: Pretty print the current week into `${ARCHIVE_DIR}/KW_${XX}.md` + stdout, where `XX` is the current calendar week.
+- `task show {all, today, unlogged, week}`: Only show tasks that are from this day/unlogged/week
 - `task push`: Upload unlogged files to Harvest
 - `task pull`: Sync remote data (clients, projects, tasks) to local db
 - `task split`: Split a portion off the last task and re-assign it
