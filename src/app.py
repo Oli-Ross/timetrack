@@ -18,11 +18,10 @@ from model import (
 from db_config import db
 from utils import (
     fzf,
-    get_iso_week_dates,
     get_short_uuid,
     get_task_lengths_in_mins,
-    daterange,
 )
+from calendar_utils import get_iso_week_dates, daterange
 from env import ARCHIVE_DIR, STATUSBAR_FILE
 from calendar_utils import get_week_string
 import pretty_print
