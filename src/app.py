@@ -291,10 +291,6 @@ def get_week_overview(KW=None):
     return output
 
 
-def print_week(KW=None):
-    print(get_week_overview(KW))
-
-
 def archive_week(KW=None):
     CURRENT_WEEK_FILE = ARCHIVE_DIR / f"KW_{get_week_string(KW)}.md"
     with open(CURRENT_WEEK_FILE, "w") as f:
@@ -598,7 +594,7 @@ def main():
                     case "all":
                         show_all_tasks()
             case "print":
-                print_week(args.kw)
+                print(get_week_overview(args.kw))
             case "assign":
                 assign_task(args.uuid)
             case "split":
