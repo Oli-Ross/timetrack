@@ -38,7 +38,10 @@ See [Doc.md](./Doc.md) for documentation on how to use the CLI.
 ## Config
 
 Configuration is managed via environment variables.
-You can put them in a `.env` file in the top-level directory of this repo or set them in your shell.
+You can put them in a `.env` file in the top-level directory of this repo or set them in your shell. An example file is provided, that you can copy and edit:
+```bash
+cp env.example .env && $EDITOR .env
+```
 
 The following config parameters are optional and have defaults:
 ```bash
