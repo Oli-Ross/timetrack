@@ -26,6 +26,7 @@ You can run `task -h` to get all subcommands or `task {SUBCOMMAND} -h` to get he
 - `task add`: Interactively edit a task retroactively
 - `task delete`: Interactively delete a task
 - `task preset {add, delete, start, show}`: Manage task presets for common tasks
+- `task archive`: Save current week's tasks in human-readable form to archive directory
 
 On each `task` invocation that changes the current task: 
 - Print the current task + time running to a file for the OS statusbar

@@ -290,8 +290,10 @@ def get_week_overview(KW=None):
 
 def archive_week(KW=None):
     CURRENT_WEEK_FILE = ARCHIVE_DIR / f"KW_{get_week_string(KW)}.md"
+    ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
     with open(CURRENT_WEEK_FILE, "w") as f:
         f.write(get_week_overview(KW))
+    print(f"Wrote week to {CURRENT_WEEK_FILE}")
 
 
 def show_status():
@@ -540,6 +542,12 @@ def main():
     subparsers.add_parser("delete", help="Delete a task")
     preset_parser = subparsers.add_parser("preset", help="Manage task presets")
     preset_parser.add_argument("preset_cmd", choices=["add", "delete", "start", "show"])
+    archive_parser = subparsers.add_parser(
+        "archive", help="Archive week's tasks in human readable form"
+    )
+    archive_parser.add_argument(
+        "--kw", type=int, help="Calendar week to print for `show week`.", default=None
+    )
 
     args = parser.parse_args()
 
@@ -576,7 +584,8 @@ def main():
                 log_tasks()
             case "push":
                 push_unlogged_tasks()
-                archive_week()
+            case "archive":
+                archive_week(args.kw)
             case "pull":
                 pull()
             case "show":
