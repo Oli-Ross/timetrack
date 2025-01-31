@@ -52,7 +52,7 @@ export PROJECT_ID="1"
 export TASK_ID="1"
 export HOURS="10"
 ```
-`ARCHIVE_DIR` is where `task print` stores the weekly human-readable reports in Markdown format.
+`ARCHIVE_DIR` is where `task archive` stores the weekly human-readable reports in Markdown format.
 `STATUSBAR_FILE` is the file that gets an ultra-short stat on the current running task on each change. 
 `TIMETRACK_DB` is the storage location of the SQLite database (make sure to use an absolute path). 
 `PROJECT_ID` and `TASK_ID` define to which default project/task on Harvest the unlogged tasks are uploaded to, if they have not been assigned.
