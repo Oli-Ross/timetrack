@@ -316,9 +316,17 @@ def show_status():
 def assign_task(uuid=None):
     clientId = fzf({x.clientId: x.name for x in HarvestClient.select()}, "Client?")
     client = HarvestClient.select().where(HarvestClient.clientId == clientId)[0]
-    projectId = fzf({x.projectId: x.name for x in client.projects}, "Project?")
+    if len(client.projects) == 1:
+        print(f'Only 1 project, selecting "{client.projects[0].name}"')
+        projectId = client.projects[0].projectId
+    else:
+        projectId = fzf({x.projectId: x.name for x in client.projects}, "Project?")
     project = HarvestProject.select().where(HarvestProject.projectId == projectId)[0]
-    taskId = fzf({x.taskId: x.name for x in project.tasks}, "Task?")
+    if len(project.tasks) == 1:
+        print(f'Only 1 task, selecting "{project.tasks[0].name}"')
+        taskId = project.tasks[0].taskId
+    else:
+        taskId = fzf({x.taskId: x.name for x in project.tasks}, "Task?")
     harvestTask = HarvestTask.select().where(HarvestTask.taskId == taskId)[0]
     if uuid:
         task = get_task(uuid)
