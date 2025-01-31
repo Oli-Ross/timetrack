@@ -12,6 +12,10 @@ class Task(pw.Model):
     taskId = pw.IntegerField(null=True)
     projectId = pw.IntegerField(null=True)
 
+    @classmethod
+    def get(cls, uuid: str):
+        return cls.select().where(cls.uuid == uuid)[0]
+
     class Meta:
         database = db
         table_name = "tasks"

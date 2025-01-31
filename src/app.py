@@ -43,10 +43,6 @@ def get_weeks_tasks(KW=None):
     return tasks
 
 
-def get_task(uuid) -> Task:
-    return Task.select().where(Task.uuid == uuid)[0]
-
-
 def get_last_task() -> Task:
     return Task.select().order_by(Task.start_time.desc()).limit(1)[0]
 
@@ -171,7 +167,7 @@ def unlog_tasks():
         return
     print(f"Reset the following tasks' log status:")
     for logEntry in lastLoggedTasksHistory:
-        task = get_task(logEntry.uuid)
+        task = Task.get(logEntry.uuid)
         task.is_logged = False
         task.save()
         print(f"{task.uuid}: {task.name}")
@@ -325,7 +321,7 @@ def assign_task(uuid=None):
         taskId = fzf({x.taskId: x.name for x in project.tasks}, "Task?")
     harvestTask = HarvestTask.select().where(HarvestTask.taskId == taskId)[0]
     if uuid:
-        task = get_task(uuid)
+        task = Task.get(uuid)
     else:
         task = get_last_task()
 
