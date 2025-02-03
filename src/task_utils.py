@@ -20,4 +20,4 @@ def start_task(name: str, taskId=None, projectId=None):
         taskId=taskId,
         projectId=projectId,
     )
-    print(f"Started task with UUID {uuid}.")
+    print(f'Started task "{name}".')

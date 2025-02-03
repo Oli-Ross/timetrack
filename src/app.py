@@ -63,7 +63,7 @@ def next_task(name: str):
         "projectId": None,
     }
     Task.create(**task_data)
-    print(f"Started task with UUID {uuid}.")
+    print(f'Started task "{name}".')
 
 
 def resume_task():
@@ -113,7 +113,7 @@ def stop_task():
     task.save()
 
     diff_mins = int(((datetime.now() - task.start_time).total_seconds()) / 60)
-    print(f"Ended task {task.uuid} (ran for {diff_mins} mins).")
+    print(f'Ended "{task.name}" (ran for {diff_mins} mins).')
 
 
 def show_task(task: Task, showDate=False, showWeekDay=True):
