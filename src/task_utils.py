@@ -38,4 +38,4 @@ def start_task(name: str, taskId=None, projectId=None, stopPrevious=False):
         taskId=taskId,
         projectId=projectId,
     )
-    print(f'Started task "{name}".')
+    print(f'Started "{name}".')

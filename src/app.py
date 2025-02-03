@@ -51,7 +51,7 @@ def resume_task():
 
     uuid = fzf({task.uuid: task.name for task in tasks}, prompt="Resume task?")
     task = [task for task in tasks if task.uuid == uuid][0]
-    print(f"Resuming task {task.name}")
+    print(f"Resuming {task.name}")
     start_task(task.name, task.taskId, task.projectId)
 
 
@@ -61,7 +61,7 @@ def extend_task():
     task = get_last_task()
     task.end_time = None
     task.save()
-    print(f'Set task "{task.name}" {task.uuid} to running.')
+    print(f'Set "{task.name}" to running.')
 
 
 def rename_task(task_name):
@@ -80,7 +80,7 @@ def abort_task():
     name = task.name
     task.delete_instance()
 
-    print(f'Aborted task "{name}".')
+    print(f'Aborted "{name}".')
 
 
 def show_task(task: Task, showDate=False, showWeekDay=True):
@@ -270,9 +270,7 @@ def show_status():
     task = get_last_task()
     diff_mins = int(((datetime.now() - task.start_time).total_seconds() % 3600) // 60)
     start_time = task.start_time.strftime("%-H:%M")
-    print(
-        f'Task "{task.name}" with UUID {task.uuid} is running since {start_time} ({diff_mins} mins).'
-    )
+    print(f'"{task.name}" running since {start_time} ({diff_mins} mins).')
 
 
 def assign_task(uuid=None):
@@ -300,7 +298,7 @@ def assign_task(uuid=None):
     task.save()
 
     print(
-        f'Attributed task "{task.name}" to {client.name}/{project.name}/{harvestTask.name}.'
+        f'Attributed "{task.name}" to {client.name}/{project.name}/{harvestTask.name}.'
     )
 
 
