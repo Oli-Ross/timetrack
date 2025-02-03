@@ -2,6 +2,7 @@ from rich.console import Console
 from rich.table import Table
 from rich.columns import Columns
 from rich.panel import Panel
+from rich.text import Text
 
 from typing import List
 from datetime import datetime
@@ -78,8 +79,14 @@ def show_daily_summary(
             else "",
         )
     this_day = datetime.now().strftime("%A")
+    if tasksToday:
+        today_panel_content = today
+    else:
+        today_panel_content = Text("No tasks logged yet.", style="italic")
     today_panel = Panel(
-        today, title=f"[magenta]Today's tasks ({this_day})", padding=(1, 1)
+        today_panel_content,
+        title=f"[magenta]Today's tasks ({this_day})",
+        padding=(1, 1),
     )
 
     columns = Columns([today_panel, weekly_panel])
