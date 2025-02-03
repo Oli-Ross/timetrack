@@ -468,11 +468,7 @@ def main():
     subparsers = parser.add_subparsers(dest="command")
 
     start_parser = subparsers.add_parser("start", help="Start a task")
-    next_parser = subparsers.add_parser(
-        "next", help="Start a task, stop the previous one."
-    )
     start_parser.add_argument("task_name", help="Name of the task")
-    next_parser.add_argument("task_name", help="Name of the task")
     rename_parser = subparsers.add_parser("rename", help="Rename last task")
     rename_parser.add_argument("task_name", help="New name of the task")
     show_parser = subparsers.add_parser("show", help="Show past tasks")
@@ -521,10 +517,6 @@ def main():
     with db:
         match args.command:
             case "start":
-                start_task(args.task_name)
-                assign_task()
-                update_statusbar()
-            case "next":
                 start_task(args.task_name, stopPrevious=True)
                 assign_task()
                 update_statusbar()
