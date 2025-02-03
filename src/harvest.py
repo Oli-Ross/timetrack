@@ -7,6 +7,12 @@ from utils import get_task_length_in_mins
 from model import HarvestClient, HarvestProject, HarvestTask, HarvestMeta
 from env import EMAIL, HARVEST_TOKEN, HARVEST_ACCOUNT_ID, TASK_ID, PROJECT_ID
 
+HARVEST_HEADERS = {
+    "User-Agent": f"MyIntegration ({EMAIL})",
+    "Authorization": "Bearer " + str(HARVEST_TOKEN),
+    "Harvest-Account-Id": str(HARVEST_ACCOUNT_ID),
+}
+
 
 def pull_weekly_harvest_hours(KW=None):
     assert all(var is not None for var in (EMAIL, HARVEST_ACCOUNT_ID, HARVEST_TOKEN)), (
@@ -21,13 +27,7 @@ def pull_weekly_harvest_hours(KW=None):
     fromDate = monday.strftime("%Y%m%d")
     toDate = friday.strftime("%Y%m%d")
     url = f"https://api.harvestapp.com/v2/reports/time/team?from={fromDate}&to={toDate}"
-    headers = {
-        "User-Agent": f"MyIntegration ({EMAIL})",
-        "Authorization": "Bearer " + str(HARVEST_TOKEN),
-        "Harvest-Account-Id": str(HARVEST_ACCOUNT_ID),
-    }
-
-    request = urllib.request.Request(url=url, headers=headers)
+    request = urllib.request.Request(url=url, headers=HARVEST_HEADERS)
     with urllib.request.urlopen(request, timeout=5) as response:
         responseCode = response.getcode()
         if responseCode != 200:
@@ -49,13 +49,7 @@ def pull_projects_clients_tasks():
         "Environment variable for Harvest upload is missing."
     )
     url = "https://api.harvestapp.com/v2/users/me/project_assignments"
-    headers = {
-        "User-Agent": f"MyIntegration ({EMAIL})",
-        "Authorization": "Bearer " + str(HARVEST_TOKEN),
-        "Harvest-Account-Id": str(HARVEST_ACCOUNT_ID),
-    }
-
-    request = urllib.request.Request(url=url, headers=headers)
+    request = urllib.request.Request(url=url, headers=HARVEST_HEADERS)
     with urllib.request.urlopen(request, timeout=5) as response:
         responseCode = response.getcode()
         if responseCode != 200:
@@ -117,15 +111,8 @@ def push_task(task):
         "task_id": task_id,
     }
     data = urllib.parse.urlencode(data).encode("ascii")
-
     url = "https://api.harvestapp.com/v2/time_entries"
-    headers = {
-        "User-Agent": f"MyIntegration ({EMAIL})",
-        "Authorization": "Bearer " + str(HARVEST_TOKEN),
-        "Harvest-Account-Id": str(HARVEST_ACCOUNT_ID),
-    }
-
-    request = urllib.request.Request(url=url, headers=headers, data=data)
+    request = urllib.request.Request(url=url, headers=HARVEST_HEADERS, data=data)
     with urllib.request.urlopen(request, timeout=5) as response:
         responseCode = response.getcode()
         if responseCode != 201:
