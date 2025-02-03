@@ -31,7 +31,9 @@ def start_preset():
         prompt="Which preset to start?",
     )
     preset = Preset.select().where(Preset.uuid == uuid).limit(1)[0]
-    start_task(preset.name, preset.task.taskId, preset.project.projectId)
+    start_task(
+        preset.name, preset.task.taskId, preset.project.projectId, stopPrevious=True
+    )
     print(f'Started task from preset "{preset.name}"')
 
 
