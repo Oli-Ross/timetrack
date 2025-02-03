@@ -34,7 +34,6 @@ def start_preset():
     start_task(
         preset.name, preset.task.taskId, preset.project.projectId, stopPrevious=True
     )
-    print(f'Started task from preset "{preset.name}"')
 
 
 def delete_preset():
