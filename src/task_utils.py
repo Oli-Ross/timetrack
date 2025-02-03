@@ -7,12 +7,30 @@ def is_task_running():
     return Task.select().where(Task.end_time.is_null(True)).exists()
 
 
-def start_task(name: str, taskId=None, projectId=None):
-    assert not is_task_running(), "There's currently a task running!"
+def get_last_task() -> Task:
+    return Task.select().order_by(Task.start_time.desc()).limit(1)[0]
 
-    uuid = get_short_uuid()
+
+def stop_task():
+    assert is_task_running(), "No task currently running!"
+
+    task = get_last_task()
+    task.end_time = datetime.now()
+    task.save()
+
+    diff_mins = int(((datetime.now() - task.start_time).total_seconds()) / 60)
+    print(f'Ended "{task.name}" (ran for {diff_mins} mins).')
+
+
+def start_task(name: str, taskId=None, projectId=None, stopPrevious=False):
+    if is_task_running():
+        if stopPrevious:
+            stop_task()
+        else:
+            raise RuntimeError("There's currently a task running!")
+
     Task.create(
-        uuid=uuid,
+        uuid=get_short_uuid(),
         start_time=datetime.now(),
         end_time=None,
         name=name,

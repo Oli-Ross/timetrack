@@ -24,7 +24,7 @@ from utils import (
 from calendar_utils import get_iso_week_dates, daterange
 from env import ARCHIVE_DIR, STATUSBAR_FILE
 from calendar_utils import get_week_string
-from task_utils import is_task_running, start_task
+from task_utils import is_task_running, start_task, get_last_task, stop_task
 import preset
 import pretty_print
 
@@ -42,28 +42,6 @@ def get_weeks_tasks(KW=None):
         .order_by(Task.start_time)
     )
     return tasks
-
-
-def get_last_task() -> Task:
-    return Task.select().order_by(Task.start_time.desc()).limit(1)[0]
-
-
-def next_task(name: str):
-    if is_task_running():
-        stop_task()
-
-    uuid = get_short_uuid()
-    task_data = {
-        "uuid": uuid,
-        "start_time": datetime.now(),
-        "end_time": None,
-        "name": name,
-        "is_logged": False,
-        "taskId": None,
-        "projectId": None,
-    }
-    Task.create(**task_data)
-    print(f'Started task "{name}".')
 
 
 def resume_task():
@@ -103,17 +81,6 @@ def abort_task():
     task.delete_instance()
 
     print(f'Aborted task "{name}".')
-
-
-def stop_task():
-    assert is_task_running(), "No task currently running!"
-
-    task = get_last_task()
-    task.end_time = datetime.now()
-    task.save()
-
-    diff_mins = int(((datetime.now() - task.start_time).total_seconds()) / 60)
-    print(f'Ended "{task.name}" (ran for {diff_mins} mins).')
 
 
 def show_task(task: Task, showDate=False, showWeekDay=True):
@@ -558,7 +525,7 @@ def main():
                 assign_task()
                 update_statusbar()
             case "next":
-                next_task(args.task_name)
+                start_task(args.task_name, stopPrevious=True)
                 assign_task()
                 update_statusbar()
             case "resume":
