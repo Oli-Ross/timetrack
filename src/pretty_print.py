@@ -1,4 +1,4 @@
-from rich.console import Console
+from rich.console import Console, Group
 from rich.table import Table
 from rich.columns import Columns
 from rich.panel import Panel
@@ -29,11 +29,8 @@ def show_presets(presets: List[Preset]):
     Console().print(table)
 
 
-def show_daily_summary(
-    tasksToday: List[Task], tasksWeek: List[Task], tasksUnlogged: List[Task]
-):
+def show_daily_summary(tasksToday: List[Task], tasksUnlogged: List[Task]):
     hours_harvest = HarvestMeta.select().limit(1)[0].hours
-    hours_local = get_task_lengths_in_mins(tasksWeek) / 60
     hours_unlogged = get_task_lengths_in_mins(tasksUnlogged) / 60
     hours_worked = hours_harvest + hours_unlogged
     hours_today = get_task_lengths_in_mins(tasksToday) / 60
@@ -50,10 +47,11 @@ def show_daily_summary(
         hours_open = int(open)
         minutes_open = int((open - hours_open) * 60)
         weekly_table.add_row("Open", doneIndicator + f"{hours_open}:{minutes_open:02}")
-    weekly_table.add_section()
-    weekly_table.add_row("Logged", f"{hours_local:.1f}")
-    weekly_table.add_row("Unlogged", f"{hours_unlogged:.1f}")
-    weekly_table.add_row("In Harvest", f"{hours_harvest:.1f}")
+    if hours_unlogged > 0:
+        weekly_table = Group(
+            weekly_table, Text("\nThere are unpushed tasks.", style="italic")
+        )
+
     this_year = str(datetime.today().date().isocalendar()[0])
     this_week = get_week_string()
     weekly_panel = Panel(

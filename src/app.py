@@ -243,9 +243,8 @@ def print_day_summary():
         .where((Task.start_time >= start_date) & (Task.start_time <= end_date))
         .order_by(Task.start_time)
     )
-    tasksWeek = get_weeks_tasks()
     tasksUnlogged = get_unlogged_tasks(includeRunning=True)
-    pretty_print.show_daily_summary(tasksToday, tasksWeek, tasksUnlogged)
+    pretty_print.show_daily_summary(tasksToday, tasksUnlogged)
 
 
 def get_week_overview(KW=None):
