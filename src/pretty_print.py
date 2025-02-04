@@ -36,11 +36,14 @@ def show_daily_summary(
     hours_local = get_task_lengths_in_mins(tasksWeek) / 60
     hours_unlogged = get_task_lengths_in_mins(tasksUnlogged) / 60
     hours_worked = hours_harvest + hours_unlogged
+    hours_today = get_task_lengths_in_mins(tasksToday) / 60
 
     weekly_table = Table(header_style="green", show_edge=False)
     weekly_table.add_column("")
     weekly_table.add_column("Hours")
-    weekly_table.add_row("Worked", f"{hours_worked:.1f}")
+    weekly_table.add_row("Worked", f"")
+    weekly_table.add_row("[italic]- week", f"{hours_worked:.1f}")
+    weekly_table.add_row("[italic]- today", f"{hours_today:.1f}")
     if HOURS:
         open = max(float(HOURS) - hours_worked, 0)
         doneIndicator = "[yellow]" if open > 0 else "[green]"
