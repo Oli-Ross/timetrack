@@ -27,7 +27,12 @@ def show_preset():
 def start_preset():
     presets = Preset.select()
     uuid = fzf(
-        {preset.uuid: preset.name for preset in presets},
+        {
+            preset.uuid: preset.name
+            + "\t"
+            + f"{preset.project.name:<20} {preset.task.name[:16]:<16} {preset.project.client.name}"
+            for preset in presets
+        },
         prompt="Which preset to start?",
     )
     preset = Preset.select().where(Preset.uuid == uuid).limit(1)[0]
