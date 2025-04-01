@@ -2,6 +2,7 @@
 
 import argparse
 from datetime import datetime, timedelta
+import sys
 from typing import Tuple
 from peewee import fn
 
@@ -585,4 +586,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt as e:
+        print(str(e))
+        sys.exit(1)
