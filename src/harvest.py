@@ -50,6 +50,9 @@ def pull_projects_clients_tasks():
     )
     url = "https://api.harvestapp.com/v2/users/me/project_assignments"
     request = urllib.request.Request(url=url, headers=HARVEST_HEADERS)
+    for table in [HarvestProject, HarvestTask, HarvestClient]:
+        table.drop_table()
+        table.create_table()
     with urllib.request.urlopen(request, timeout=5) as response:
         responseCode = response.getcode()
         if responseCode != 200:
