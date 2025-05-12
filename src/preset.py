@@ -28,9 +28,9 @@ def start_preset():
     presets = Preset.select()
     uuid = fzf(
         {
-            preset.uuid: preset.name
+            preset.uuid: f"{preset.name:<20}"
             + "\t"
-            + f"{preset.project.name:<20} {preset.task.name[:16]:<16} {preset.project.client.name}"
+            + f"{preset.project.name:<20} {preset.task.name[:20]:<20} {preset.project.client.name}"
             for preset in presets
         },
         prompt="Which preset to start?",
