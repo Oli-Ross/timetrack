@@ -48,7 +48,10 @@ def get_weeks_tasks(KW=None):
 def resume_task():
     assert not is_task_running(), "There's currently a task running!"
 
-    tasks = Task.select()
+    today = datetime.today()
+    tasks = Task.select().where(
+        fn.strftime("%Y-%m-%d", Task.start_time) == today.strftime("%Y-%m-%d")
+    )
 
     uuid = fzf({task.uuid: task.name for task in tasks}, prompt="Resume task?")
     task = [task for task in tasks if task.uuid == uuid][0]
