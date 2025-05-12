@@ -591,6 +591,6 @@ def main():
 if __name__ == "__main__":
     try:
         main()
-    except KeyboardInterrupt as e:
+    except Exception as e:
         print(str(e))
         sys.exit(1)
