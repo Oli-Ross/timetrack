@@ -8,25 +8,9 @@ from typing import List
 from datetime import datetime
 
 from calendar_utils import get_week_string
-from model import Preset, Task, HarvestMeta
+from model import Task, HarvestMeta
 from utils import get_task_lengths_in_mins
 from env import HOURS
-
-
-def show_presets(presets: List[Preset]):
-    table = Table(header_style="green", title="[magenta]Presets")
-    table.add_column("Name", style="red", min_width=10)
-    table.add_column("Harvest Task")
-    table.add_column("Harvest Client/Project")
-
-    for preset in presets:
-        table.add_row(
-            f"{preset.name}",
-            f"{preset.task.name}",
-            f"{preset.project.client.name}/{preset.project.name}",
-        )
-
-    Console().print(table)
 
 
 def show_daily_summary(tasksToday: List[Task], tasksUnlogged: List[Task]):

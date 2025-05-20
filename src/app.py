@@ -14,7 +14,6 @@ from model import (
     HarvestMeta,
     HarvestProject,
     HarvestTask,
-    Preset,
 )
 from db_config import db
 from utils import (
@@ -26,7 +25,6 @@ from calendar_utils import get_iso_week_dates, daterange
 from env import ARCHIVE_DIR, STATUSBAR_FILE
 from calendar_utils import get_week_string
 from task_utils import is_task_running, start_task, get_last_task, stop_task
-import preset
 import pretty_print
 
 
@@ -180,7 +178,6 @@ def show_db():
     show_single_db("Clients", HarvestClient)
     show_single_db("Harvest Tasks", HarvestTask)
     show_single_db("Last logged", LogHistory)
-    show_single_db("Presets", Preset)
     show_single_db("Logged hours", HarvestMeta)
 
 
@@ -359,7 +356,6 @@ def setup():
                 HarvestMeta,
                 HarvestProject,
                 HarvestTask,
-                Preset,
             ]
         )
         pull()
@@ -504,8 +500,6 @@ def main():
     subparsers.add_parser("edit", help="Edit a task")
     subparsers.add_parser("add", help="Add a task")
     subparsers.add_parser("delete", help="Delete a task")
-    preset_parser = subparsers.add_parser("preset", help="Manage task presets")
-    preset_parser.add_argument("preset_cmd", choices=["add", "delete", "start", "show"])
     archive_parser = subparsers.add_parser(
         "archive", help="Archive week's tasks in human readable form"
     )
@@ -570,17 +564,6 @@ def main():
                 add_old_task()
             case "delete":
                 delete_task()
-            case "preset":
-                match args.preset_cmd:
-                    case "add":
-                        preset.add_preset()
-                    case "delete":
-                        preset.delete_preset()
-                    case "start":
-                        preset.start_preset()
-                        update_statusbar()
-                    case "show":
-                        preset.show_preset()
             case _:
                 print_day_summary()
 

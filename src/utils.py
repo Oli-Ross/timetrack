@@ -19,7 +19,9 @@ def get_task_lengths_in_mins(tasks: List[Task]):
 
 def fzf(input: Dict, prompt=None) -> str:
     fzfInput = "\n".join([str(key) + ":" + str(val) for key, val in input.items()])
-    cmd_line = ["fzf"]
+    cmd_line = ["fzf-tmux"]
+    cmd_line.append("-p 80%")
+    cmd_line.append("--preview-window=hidden")
     if prompt:
         cmd_line.append(f'--prompt="{prompt} "')
     cmd_line.append("--delimiter=:")
