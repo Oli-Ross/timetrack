@@ -22,8 +22,8 @@ def stop_task():
     print(f'Ended "{task.name}" (ran for {diff_mins} mins).')
 
 
-def start_task(taskId=None, projectId=None, stopPrevious=False):
-    name = input("Name? ")
+def start_task(taskId=None, projectId=None, stopPrevious=False, taskName=None):
+    name = taskName or input("Name? ")
     if is_task_running():
         if stopPrevious:
             stop_task()
