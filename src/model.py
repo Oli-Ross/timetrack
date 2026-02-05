@@ -65,3 +65,15 @@ class HarvestMeta(pw.Model):
     class Meta:
         database = db
         table_name = "harvest_weeklyhours"
+
+
+class Preset(pw.Model):
+    uuid = pw.CharField(primary_key=True)
+    project = pw.CharField()
+    client = pw.CharField()
+    task = pw.CharField()
+    name = pw.CharField()
+
+    class Meta:
+        database = db
+        table_name = "presets"

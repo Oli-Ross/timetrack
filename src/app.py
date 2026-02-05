@@ -4,11 +4,16 @@ import argparse
 from datetime import datetime, timedelta
 import sys
 from typing import Tuple
+import uuid
 from peewee import fn
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
 
 from harvest import push_task, pull_weekly_harvest_hours, pull
 from model import (
     HarvestClient,
+    Preset,
     Task,
     LogHistory,
     HarvestMeta,
@@ -356,6 +361,7 @@ def setup():
                 HarvestMeta,
                 HarvestProject,
                 HarvestTask,
+                Preset,
             ]
         )
         pull()
@@ -450,6 +456,54 @@ def delete_task():
     task.delete_instance()
 
 
+def delete_preset():
+    presetId = fzf({x.uuid: x.name for x in Preset.select()}, "Preset?")
+    preset = Preset.select().where(Preset.uuid == presetId)[0]
+    name = preset.name
+    preset.delete_instance()
+    print(f'Deleted Preset "{name}"')
+
+
+def add_preset():
+    clientId = fzf({x.clientId: x.name for x in HarvestClient.select()}, "Client?")
+    client = HarvestClient.select().where(HarvestClient.clientId == clientId)[0]
+    if len(client.projects) == 1:
+        print(f'Only 1 project, selecting "{client.projects[0].name}"')
+        projectId = client.projects[0].projectId
+    else:
+        projectId = fzf({x.projectId: x.name for x in client.projects}, "Project?")
+    project = HarvestProject.select().where(HarvestProject.projectId == projectId)[0]
+    if len(project.tasks) == 1:
+        print(f'Only 1 task, selecting "{project.tasks[0].name}"')
+        taskId = project.tasks[0].taskId
+    else:
+        taskId = fzf({x.taskId: x.name for x in project.tasks}, "Task?")
+    task = HarvestTask.select().where(HarvestTask.taskId == taskId)[0]
+
+    presetName = input("Preset name (= Harvest comment)? ")
+    preset_data = {
+        "uuid": get_short_uuid(),
+        "name": presetName,
+        "project": project.name,
+        "client": client.name,
+        "task": task.name,
+    }
+    Preset.create(**preset_data)
+
+
+def start_preset():
+    presetId = fzf({x.uuid: x.name for x in Preset.select()}, "Preset?")
+    preset = Preset.select().where(Preset.uuid == presetId)[0]
+    project = HarvestProject.select().where(HarvestProject.name == preset.project)[0]
+    task = HarvestTask.select().where(HarvestTask.name == preset.task)[0]
+    start_task(
+        taskId=task.taskId,
+        projectId=project.projectId,
+        taskName=preset.name,
+        stopPrevious=True,
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(description="Time logging tool")
     parser.add_argument(
@@ -499,6 +553,12 @@ def main():
     subparsers.add_parser("edit", help="Edit a task")
     subparsers.add_parser("add", help="Add a task")
     subparsers.add_parser("delete", help="Delete a task")
+    preset_parser = subparsers.add_parser("preset", help="Manage/use presets")
+    preset_parser.add_argument(
+        "preset_command",
+        help="preset command",
+        choices=["add", "delete", "start", "list"],
+    )
     archive_parser = subparsers.add_parser(
         "archive", help="Archive week's tasks in human readable form"
     )
@@ -563,6 +623,16 @@ def main():
                 add_old_task()
             case "delete":
                 delete_task()
+            case "preset":
+                match args.preset_command:
+                    case "add":
+                        add_preset()
+                    case "delete":
+                        delete_preset()
+                    case "start":
+                        start_preset()
+                    case "list":
+                        pretty_print.list_presets()
             case _:
                 print_day_summary()
 
