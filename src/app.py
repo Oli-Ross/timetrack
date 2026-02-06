@@ -631,6 +631,7 @@ def main():
                         delete_preset()
                     case "start":
                         start_preset()
+                        update_statusbar()
                     case "list":
                         pretty_print.list_presets()
             case _:
