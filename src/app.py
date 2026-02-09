@@ -496,10 +496,11 @@ def start_preset():
     preset = Preset.select().where(Preset.uuid == presetId)[0]
     project = HarvestProject.select().where(HarvestProject.name == preset.project)[0]
     task = HarvestTask.select().where(HarvestTask.name == preset.task)[0]
+    comment = input("Comment (Enter for preset name)? ").strip() or preset.name
     start_task(
         taskId=task.taskId,
         projectId=project.projectId,
-        taskName=preset.name,
+        taskName=comment,
         stopPrevious=True,
     )
 
