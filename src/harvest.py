@@ -1,11 +1,21 @@
-from datetime import datetime, timedelta
 import json
-import urllib.request
 import urllib.parse
+import urllib.request
+from datetime import datetime, timedelta
+from typing import TypedDict
 
+from env import EMAIL, HARVEST_ACCOUNT_ID, HARVEST_TOKEN, PROJECT_ID, TASK_ID
+from model import HarvestClient, HarvestMeta, HarvestProject, HarvestTask
 from utils import get_task_length_in_mins
-from model import HarvestClient, HarvestProject, HarvestTask, HarvestMeta
-from env import EMAIL, HARVEST_TOKEN, HARVEST_ACCOUNT_ID, TASK_ID, PROJECT_ID
+
+
+class RemoteHarvestTask(TypedDict):
+    spent_date: str
+    hours: str
+    notes: str
+    project_id: str
+    task_id: str
+
 
 HARVEST_HEADERS = {
     "User-Agent": f"MyIntegration ({EMAIL})",
@@ -82,13 +92,30 @@ def pull_projects_clients_tasks():
             )
 
 
+def push_harvest_task(data: RemoteHarvestTask):
+    data_encoded = urllib.parse.urlencode(data).encode("ascii")
+    url = "https://api.harvestapp.com/v2/time_entries"
+    request = urllib.request.Request(
+        url=url, headers=HARVEST_HEADERS, data=data_encoded
+    )
+    with urllib.request.urlopen(request, timeout=5) as response:
+        responseCode = response.getcode()
+        if responseCode != 201:
+            responseBody = response.read().decode("utf-8")
+            jsonResponse = json.loads(responseBody)
+            print(json.dumps(jsonResponse, sort_keys=True, indent=2))
+            raise Exception(
+                f"Request failed: Couldn't push task {task.uuid} to Harvest."
+            )
+
+
 def push_task(task):
     assert all(var is not None for var in (EMAIL, HARVEST_ACCOUNT_ID, HARVEST_TOKEN)), (
         "Environment variable for Harvest upload is missing."
     )
     time_spent = get_task_length_in_mins(task) / 60
-    if time_spent < 0:
-        raise ValueError("Spent time shouldn't be negative.")
+    assert time_spent > 0, "Spent time shouldn't be negative."
+
     spent_date = task.start_time.strftime("%Y-%m-%d")
     hours = f"{time_spent:.2f}"
     notes = task.name
@@ -108,25 +135,14 @@ def push_task(task):
             f'Task "{task.name}" with UUID {task.uuid} has missing task info + is pushed as default task.'
         )
 
-    data = {
+    data: RemoteHarvestTask = {
         "spent_date": spent_date,
         "hours": hours,
         "notes": notes,
         "project_id": project_id,
         "task_id": task_id,
     }
-    data = urllib.parse.urlencode(data).encode("ascii")
-    url = "https://api.harvestapp.com/v2/time_entries"
-    request = urllib.request.Request(url=url, headers=HARVEST_HEADERS, data=data)
-    with urllib.request.urlopen(request, timeout=5) as response:
-        responseCode = response.getcode()
-        if responseCode != 201:
-            responseBody = response.read().decode("utf-8")
-            jsonResponse = json.loads(responseBody)
-            print(json.dumps(jsonResponse, sort_keys=True, indent=2))
-            raise Exception(
-                f"Request failed: Couldn't push task {task.uuid} to Harvest."
-            )
+    push_harvest_task(data)
 
 
 def pull():
