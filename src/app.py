@@ -268,14 +268,17 @@ def archive_week(KW=None):
     print(f"Wrote week to {CURRENT_WEEK_FILE}")
 
 
-def show_status():
+def show_status(quiet_status:bool=False)->bool:
     if not is_task_running():
-        print("No task currently running!")
-        return
+        if not quiet_status:
+            print("No task currently running!")
+        return False
     task = get_last_task()
     diff_mins = int(((datetime.now() - task.start_time).total_seconds() % 3600) // 60)
     start_time = task.start_time.strftime("%-H:%M")
-    print(f'"{task.name}" running since {start_time} ({diff_mins} mins).')
+    if not quiet_status:
+        print(f'"{task.name}" running since {start_time} ({diff_mins} mins).')
+    return True
 
 
 def assign_task(uuid=None):
@@ -505,7 +508,7 @@ def start_preset():
     )
 
 
-def main():
+def main() -> bool | None:
     parser = argparse.ArgumentParser(description="Time logging tool")
     parser.add_argument(
         "-d",
@@ -535,7 +538,16 @@ def main():
     subparsers.add_parser(
         "unlog", help="Undo the last operation that marked tasks logged."
     )
-    subparsers.add_parser("status", help="Show info about currently running task")
+    status_parser = subparsers.add_parser(
+        "status", help="Show info about currently running task"
+    )
+    status_parser.add_argument(
+        "-q",
+        help="Return 0 if task runs, 1 otherwise.",
+        action="store_const",
+        dest="quiet_status",
+        const=True,
+    )
     subparsers.add_parser("stop", help="Stop current task")
     subparsers.add_parser("pull", help="Sync Harvest data back to local db")
     assign_parser = subparsers.add_parser(
@@ -591,7 +603,7 @@ def main():
                 rename_task(args.task_name)
                 update_statusbar()
             case "status":
-                show_status()
+                return show_status(args.quiet_status) if args.quiet_status else True
             case "unlog":
                 unlog_tasks()
             case "log":
@@ -644,10 +656,14 @@ def main():
 
 if __name__ == "__main__":
     try:
-        main()
+        ret = main()
+        if isinstance(ret, bool):
+            if ret:
+                sys.exit(0)
+            else:
+                sys.exit(1)
     except Exception as e:
         print(str(e))
         sys.exit(1)
     except KeyboardInterrupt:
-        print("\nAborted.")
         sys.exit(1)
