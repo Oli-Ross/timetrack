@@ -2,14 +2,10 @@
 
 import argparse
 import sys
-import uuid
 from datetime import datetime, timedelta
 from typing import Tuple
 
-from peewee import Query, fn
-from rich.console import Console
-from rich.panel import Panel
-from rich.table import Table
+from peewee import fn
 
 import pretty_print
 from calendar_utils import daterange, get_iso_week_dates, get_week_string
