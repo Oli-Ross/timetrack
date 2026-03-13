@@ -1,5 +1,19 @@
 #!/usr/bin/env python3
 
+import builtins
+
+_real_print = builtins.print
+QUIET = False
+
+
+def quiet_print(*args, **kwargs):
+    if not QUIET:
+        _real_print(*args, **kwargs)
+
+
+builtins.print = quiet_print
+
+
 import argparse
 import sys
 from datetime import datetime, timedelta
@@ -264,16 +278,14 @@ def archive_week(KW=None):
     print(f"Wrote week to {CURRENT_WEEK_FILE}")
 
 
-def show_status(quiet_status:bool=False)->bool:
+def show_status(quiet: bool = False) -> bool:
     if not is_task_running():
-        if not quiet_status:
-            print("No task currently running!")
+        print("No task currently running!")
         return False
     task = get_last_task()
     diff_mins = int(((datetime.now() - task.start_time).total_seconds() % 3600) // 60)
     start_time = task.start_time.strftime("%-H:%M")
-    if not quiet_status:
-        print(f'"{task.name}" running since {start_time} ({diff_mins} mins).')
+    print(f'"{task.name}" running since {start_time} ({diff_mins} mins).')
     return True
 
 
@@ -515,6 +527,15 @@ def main() -> bool | None:
         const=True,
         default=False,
     )
+    parser.add_argument(
+        "-q",
+        "--quiet",
+        help="Don't output to stdout",
+        action="store_const",
+        dest="quiet",
+        const=True,
+        default=False,
+    )
 
     subparsers = parser.add_subparsers(dest="command")
 
@@ -536,13 +557,6 @@ def main() -> bool | None:
     )
     status_parser = subparsers.add_parser(
         "status", help="Show info about currently running task"
-    )
-    status_parser.add_argument(
-        "-q",
-        help="Return 0 if task runs, 1 otherwise.",
-        action="store_const",
-        dest="quiet_status",
-        const=True,
     )
     subparsers.add_parser("stop", help="Stop current task")
     subparsers.add_parser("pull", help="Sync Harvest data back to local db")
@@ -577,6 +591,9 @@ def main() -> bool | None:
 
     args = parser.parse_args()
 
+    global QUIET
+    QUIET = args.quiet
+
     with db:
         match args.command:
             case "start":
@@ -599,7 +616,8 @@ def main() -> bool | None:
                 rename_task(args.task_name)
                 update_statusbar()
             case "status":
-                return show_status(args.quiet_status) if args.quiet_status else True
+                ret = show_status(QUIET)
+                return ret if QUIET else True
             case "unlog":
                 unlog_tasks()
             case "log":
