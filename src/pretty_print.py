@@ -1,16 +1,16 @@
-from rich.console import Console, Group
-from rich.table import Table
+from datetime import datetime
+from typing import List
+
 from rich.columns import Columns
+from rich.console import Console, Group
 from rich.panel import Panel
+from rich.table import Table
 from rich.text import Text
 
-from typing import List
-from datetime import datetime
-
 from calendar_utils import get_week_string
-from model import Task, HarvestMeta, Preset
-from utils import get_task_lengths_in_mins
 from env import HOURS
+from model import HarvestMeta, Preset, Task
+from utils import get_task_lengths_in_mins
 
 
 def show_daily_summary(tasksToday: List[Task], tasksUnlogged: List[Task]):
