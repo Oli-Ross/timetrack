@@ -1,7 +1,8 @@
+import subprocess
 import uuid
 from datetime import datetime
-import subprocess
-from typing import List, Dict
+from typing import Dict, List
+
 from model import Task
 
 

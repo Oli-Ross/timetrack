@@ -1,36 +1,36 @@
 #!/usr/bin/env python3
 
 import argparse
-from datetime import datetime, timedelta
 import sys
-from typing import Tuple
 import uuid
-from peewee import fn
+from datetime import datetime, timedelta
+from typing import Tuple
+
+from peewee import Query, fn
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from harvest import push_task, pull_weekly_harvest_hours, pull
+import pretty_print
+from calendar_utils import daterange, get_iso_week_dates, get_week_string
+from db_config import db
+from env import ARCHIVE_DIR, STATUSBAR_FILE
+from harvest import pull, pull_weekly_harvest_hours, push_task
 from model import (
     HarvestClient,
-    Preset,
-    Task,
-    LogHistory,
     HarvestMeta,
     HarvestProject,
     HarvestTask,
+    LogHistory,
+    Preset,
+    Task,
 )
-from db_config import db
+from task_utils import get_last_task, is_task_running, start_task, stop_task
 from utils import (
     fzf,
     get_short_uuid,
     get_task_lengths_in_mins,
 )
-from calendar_utils import get_iso_week_dates, daterange
-from env import ARCHIVE_DIR, STATUSBAR_FILE
-from calendar_utils import get_week_string
-from task_utils import is_task_running, start_task, get_last_task, stop_task
-import pretty_print
 
 
 def get_weeks_tasks(KW=None):
