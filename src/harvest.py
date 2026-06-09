@@ -114,7 +114,9 @@ def push_task(task):
         "Environment variable for Harvest upload is missing."
     )
     time_spent = get_task_length_in_mins(task) / 60
-    assert time_spent > 0, "Spent time shouldn't be negative."
+    assert time_spent >= 0, "Spent time shouldn't be negative."
+    if time_spent == 0:
+        return
 
     spent_date = task.start_time.strftime("%Y-%m-%d")
     hours = f"{time_spent:.2f}"
