@@ -4,7 +4,14 @@ import urllib.request
 from datetime import datetime, timedelta
 from typing import TypedDict
 
-from env import EMAIL, HARVEST_ACCOUNT_ID, HARVEST_TOKEN, PROJECT_ID, TASK_ID
+from env import (
+    EMAIL,
+    HARVEST_ACCOUNT_ID,
+    HARVEST_TOKEN,
+    PROJECT_ID,
+    TASK_ID,
+    WEEKLY_HOUR_API_INDEX,
+)
 from model import HarvestClient, HarvestMeta, HarvestProject, HarvestTask
 from utils import get_task_length_in_mins
 
@@ -49,7 +56,7 @@ def pull_weekly_harvest_hours(KW=None):
     if not jsonResponse["results"]:
         hours = 0.0
     else:
-        hours = jsonResponse["results"][0]["total_hours"]
+        hours = jsonResponse["results"][WEEKLY_HOUR_API_INDEX]["total_hours"]
     HarvestMeta.delete().execute()
     HarvestMeta.create(hours=hours)
 

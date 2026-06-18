@@ -51,12 +51,14 @@ export TIMETRACK_DB="/tmp/timetrack.db"
 export PROJECT_ID="1"
 export TASK_ID="1"
 export HOURS="10"
+export WEEKLY_HOUR_API_INDEX="0" 
 ```
 `ARCHIVE_DIR` is where `task archive` stores the weekly human-readable reports in Markdown format.
 `STATUSBAR_FILE` is the file that gets an ultra-short stat on the current running task on each change. 
 `TIMETRACK_DB` is the storage location of the SQLite database (make sure to use an absolute path). 
 `PROJECT_ID` and `TASK_ID` define to which default project/task on Harvest the unlogged tasks are uploaded to, if they have not been assigned.
 `HOURS` defines how many hours per week need to be worked, to compute the remaining time.
+`WEEKLY_HOUR_API_INDEX` defines at which index in resut of the API call to https://api.harvestapp.com/v2/reports/time/team your weekly hours are listed. If you only have permission to view your own data, this is 0.
 
 In order to successfully push to Harvest, these environment variables are required:
 ```bash
