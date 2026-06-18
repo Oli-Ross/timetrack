@@ -29,11 +29,16 @@ def show_daily_summary(tasksToday: List[Task], tasksUnlogged: List[Task]):
     weekly_table.add_row("[italic]- week", f"{hours_worked:.1f}")
     weekly_table.add_row("[italic]- today", f"{hours_today:.1f}")
     if HOURS:
-        open_time_in_hours = max(float(HOURS) - hours_worked, 0)
+        open_time_in_hours = float(HOURS) - hours_worked
         doneIndicator = "[yellow]" if open_time_in_hours > 0 else "[green]"
         open_hours = int(open_time_in_hours)
-        minutes_open = int((open_time_in_hours - open_hours) * 60)
-        weekly_table.add_row("Open", doneIndicator + f"{open_hours}:{minutes_open:02}")
+        if open_hours < 0:
+            post_indicator = " overtime"
+        minutes_open = abs(int((open_time_in_hours - open_hours) * 60))
+        open_hours = str(abs(open_hours))
+        weekly_table.add_row(
+            "Open", doneIndicator + f"{open_hours}:{minutes_open:02}{post_indicator}"
+        )
     if hours_unlogged > 0:
         weekly_table = Group(
             weekly_table, Text("\nThere are unpushed tasks.", style="italic")
