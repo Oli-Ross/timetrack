@@ -32,8 +32,7 @@ def show_daily_summary(tasksToday: List[Task], tasksUnlogged: List[Task]):
         open_time_in_hours = float(HOURS) - hours_worked
         doneIndicator = "[yellow]" if open_time_in_hours > 0 else "[green]"
         open_hours = int(open_time_in_hours)
-        if open_hours < 0:
-            post_indicator = " overtime"
+        post_indicator = " overtime" if open_hours < 0 else ""
         minutes_open = abs(int((open_time_in_hours - open_hours) * 60))
         open_hours = str(abs(open_hours))
         weekly_table.add_row(
