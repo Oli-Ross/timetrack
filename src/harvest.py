@@ -18,6 +18,8 @@ from utils import get_task_length_in_mins
 
 class RemoteHarvestTask(TypedDict):
     spent_date: str
+    started_time: str
+    ended_time: str
     hours: str
     notes: str
     project_id: str
@@ -146,6 +148,8 @@ def push_task(task):
 
     data: RemoteHarvestTask = {
         "spent_date": spent_date,
+        "started_time": task.start_time.strftime("%H:%M"),
+        "ended_time": task.end_time.strftime("%H:%M"),
         "hours": hours,
         "notes": notes,
         "project_id": project_id,
