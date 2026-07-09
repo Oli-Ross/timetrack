@@ -34,6 +34,7 @@ from model import (
     LogHistory,
     Preset,
     Task,
+    User,
 )
 from task_utils import get_last_task, is_task_running, start_task, stop_task
 from utils import (
@@ -373,6 +374,7 @@ def setup():
                 HarvestProject,
                 HarvestTask,
                 Preset,
+                User,
             ]
         )
         pull()

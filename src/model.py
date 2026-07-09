@@ -1,5 +1,14 @@
 import peewee as pw
+
 from db_config import db
+
+
+class User(pw.Model):
+    id = pw.CharField(primary_key=True)
+
+    class Meta:
+        database = db
+        table_name = "user"
 
 
 class Task(pw.Model):

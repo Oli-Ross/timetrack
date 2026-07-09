@@ -10,9 +10,8 @@ from env import (
     HARVEST_TOKEN,
     PROJECT_ID,
     TASK_ID,
-    WEEKLY_HOUR_API_INDEX,
 )
-from model import HarvestClient, HarvestMeta, HarvestProject, HarvestTask
+from model import HarvestClient, HarvestMeta, HarvestProject, HarvestTask, User
 from utils import get_task_length_in_mins
 
 
@@ -33,7 +32,29 @@ HARVEST_HEADERS = {
 }
 
 
+def get_user_id() -> str:
+    user = User.select().limit(1)
+    if user:
+        return user[0].id
+    else:
+        print("User ID not cached, getting it from Harvest API..")
+        url = "https://api.harvestapp.com/v2/users/me"
+        request = urllib.request.Request(url=url, headers=HARVEST_HEADERS)
+        with urllib.request.urlopen(request, timeout=5) as response:
+            responseCode = response.getcode()
+            if responseCode != 200:
+                raise Exception("Request to Harvest failed.")
+
+            responseBody = response.read().decode("utf-8")
+            jsonResponse = json.loads(responseBody)
+            userID = jsonResponse["id"]
+            print(f"User ID is {userID}.")
+            User.create(id=userID)
+            return userID
+
+
 def pull_weekly_harvest_hours(KW=None):
+    user_id = get_user_id()
     assert all(var is not None for var in (EMAIL, HARVEST_ACCOUNT_ID, HARVEST_TOKEN)), (
         "Environment variable for Harvest upload is missing."
     )
@@ -55,10 +76,14 @@ def pull_weekly_harvest_hours(KW=None):
         responseBody = response.read().decode("utf-8")
         jsonResponse = json.loads(responseBody)
 
-    if not jsonResponse["results"]:
+    if not jsonResponse["results"] or user_id not in [
+        str(x["user_id"]) for x in jsonResponse["results"]
+    ]:
         hours = 0.0
     else:
-        hours = jsonResponse["results"][WEEKLY_HOUR_API_INDEX]["total_hours"]
+        hours = next(
+            x for x in jsonResponse["results"] if user_id in str(x["user_id"])
+        )["total_hours"]
     HarvestMeta.delete().execute()
     HarvestMeta.create(hours=hours)
 
