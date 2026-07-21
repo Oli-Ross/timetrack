@@ -76,6 +76,14 @@ class HarvestMeta(pw.Model):
         table_name = "harvest_weeklyhours"
 
 
+class DailyTarget(pw.Model):
+    hours = pw.FloatField(primary_key=True)
+
+    class Meta:
+        database = db
+        table_name = "daily_target"
+
+
 class Preset(pw.Model):
     uuid = pw.CharField(primary_key=True)
     project = pw.CharField()

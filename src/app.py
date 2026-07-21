@@ -27,6 +27,7 @@ from db_config import db
 from env import ARCHIVE_DIR, STATUSBAR_FILE
 from harvest import pull, pull_weekly_harvest_hours, push_task
 from model import (
+    DailyTarget,
     HarvestClient,
     HarvestMeta,
     HarvestProject,
@@ -375,6 +376,7 @@ def setup():
                 HarvestTask,
                 Preset,
                 User,
+                DailyTarget,
             ]
         )
         pull()
@@ -518,6 +520,17 @@ def start_preset():
     )
 
 
+def change_target() -> None:
+    hours = float(input("New daily target in hours? "))
+    DailyTarget.delete().execute()
+    DailyTarget.create(hours=hours)
+
+
+def delete_target() -> None:
+    DailyTarget.delete().execute()
+    print("Removed daily target")
+
+
 def main() -> bool | None:
     parser = argparse.ArgumentParser(description="Time logging tool")
     parser.add_argument(
@@ -583,6 +596,12 @@ def main() -> bool | None:
         "preset_command",
         help="preset command",
         choices=["add", "delete", "start", "list"],
+    )
+    target_parser = subparsers.add_parser("target", help="Change/remove daily target")
+    target_parser.add_argument(
+        "target_command",
+        help="target command",
+        choices=["change", "delete"],
     )
     archive_parser = subparsers.add_parser(
         "archive", help="Archive week's tasks in human readable form"
@@ -652,6 +671,12 @@ def main() -> bool | None:
                 add_old_task()
             case "delete":
                 delete_task()
+            case "target":
+                match args.target_command:
+                    case "change":
+                        change_target()
+                    case "delete":
+                        delete_target()
             case "preset":
                 match args.preset_command:
                     case "add":

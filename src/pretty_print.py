@@ -9,8 +9,20 @@ from rich.text import Text
 
 from calendar_utils import get_week_string
 from env import HOURS
-from model import HarvestMeta, Preset, Task
+from model import DailyTarget, HarvestMeta, Preset, Task
 from utils import get_task_lengths_in_mins
+
+
+def _hours_to_hhmm_string(hours: float, color: bool = True) -> str:
+    whole_hours = int(hours)
+    pre_indicator = "[green]" if whole_hours < 0 else "[yellow]"
+    post_indicator = " over" if whole_hours < 0 else ""
+    minutes = abs(int((hours - whole_hours) * 60))
+    open_hours = str(abs(whole_hours))
+    if color:
+        return f"{pre_indicator}{open_hours}:{minutes:02}{post_indicator}"
+    else:
+        return f"{open_hours}:{minutes:02}{post_indicator}"
 
 
 def show_daily_summary(tasksToday: List[Task], tasksUnlogged: List[Task]):
@@ -28,6 +40,18 @@ def show_daily_summary(tasksToday: List[Task], tasksUnlogged: List[Task]):
     weekly_table.add_row("Worked", f"")
     weekly_table.add_row("[italic]- week", f"{hours_worked:.1f}")
     weekly_table.add_row("[italic]- today", f"{hours_today:.1f}")
+
+    daily_target = DailyTarget.select().limit(1)
+    daily_target_set = False
+    if daily_target:
+        daily_target_set = True
+        daily_target_hours = daily_target[0].hours
+        daily_target_diff = daily_target_hours - hours_today
+        daily_target_indicator = (
+            _hours_to_hhmm_string(daily_target_diff)
+            + f" / {_hours_to_hhmm_string(daily_target_hours, color=False)}"
+        )
+
     if HOURS:
         open_time_in_hours = float(HOURS) - hours_worked
         doneIndicator = "[yellow]" if open_time_in_hours > 0 else "[green]"
@@ -35,9 +59,16 @@ def show_daily_summary(tasksToday: List[Task], tasksUnlogged: List[Task]):
         post_indicator = " overtime" if open_hours < 0 else ""
         minutes_open = abs(int((open_time_in_hours - open_hours) * 60))
         open_hours = str(abs(open_hours))
+        weekly_table.add_row("Open", "")
         weekly_table.add_row(
-            "Open", doneIndicator + f"{open_hours}:{minutes_open:02}{post_indicator}"
+            "[italic]- week",
+            doneIndicator + f"{open_hours}:{minutes_open:02}{post_indicator}",
         )
+        if daily_target_set:
+            weekly_table.add_row(
+                "[italic]- today",
+                daily_target_indicator,
+            )
     if hours_unlogged > 0:
         weekly_table = Group(
             weekly_table, Text("\nThere are unpushed tasks.", style="italic")
