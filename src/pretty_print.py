@@ -49,7 +49,7 @@ def show_daily_summary(tasksToday: List[Task], tasksUnlogged: List[Task]):
         daily_target_diff = daily_target_hours - hours_today
         daily_target_indicator = (
             _hours_to_hhmm_string(daily_target_diff)
-            + f" / {_hours_to_hhmm_string(daily_target_hours, color=False)}"
+            + f"[/] / {_hours_to_hhmm_string(daily_target_hours, color=False)}"
         )
 
     if HOURS:
