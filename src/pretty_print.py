@@ -38,8 +38,10 @@ def show_daily_summary(tasksToday: List[Task], tasksUnlogged: List[Task]):
         f"Target", (f"[red]" if int(HOURS) != 24 else "") + f"{HOURS}.0"
     )
     weekly_table.add_row("Worked", f"")
-    weekly_table.add_row("[italic]- week", f"{hours_worked:.1f}")
-    weekly_table.add_row("[italic]- today", f"{hours_today:.1f}")
+    if HOURS:
+        weekly_table.add_row("[italic]- week", f"{hours_worked:.1f} / {HOURS}")
+    else:
+        weekly_table.add_row("[italic]- week", f"{hours_worked:.1f}")
 
     daily_target = DailyTarget.select().limit(1)
     daily_target_set = False
@@ -47,9 +49,13 @@ def show_daily_summary(tasksToday: List[Task], tasksUnlogged: List[Task]):
         daily_target_set = True
         daily_target_hours = daily_target[0].hours
         daily_target_diff = daily_target_hours - hours_today
-        daily_target_indicator = (
-            _hours_to_hhmm_string(daily_target_diff) + f"[/] / {daily_target_hours}"
+        daily_target_indicator = _hours_to_hhmm_string(daily_target_diff)
+    if daily_target_set:
+        weekly_table.add_row(
+            "[italic]- today", f"{hours_today:.1f} / {daily_target_hours}"
         )
+    else:
+        weekly_table.add_row("[italic]- today", f"{hours_today:.1f}")
 
     if HOURS:
         open_time_in_hours = float(HOURS) - hours_worked
@@ -61,8 +67,7 @@ def show_daily_summary(tasksToday: List[Task], tasksUnlogged: List[Task]):
         weekly_table.add_row("Open", "")
         weekly_table.add_row(
             "[italic]- week",
-            doneIndicator
-            + f"{open_hours}:{minutes_open:02}{post_indicator} [/]/ {HOURS}",
+            doneIndicator + f"{open_hours}:{minutes_open:02}{post_indicator}",
         )
         if daily_target_set:
             weekly_table.add_row(
