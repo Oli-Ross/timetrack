@@ -48,8 +48,7 @@ def show_daily_summary(tasksToday: List[Task], tasksUnlogged: List[Task]):
         daily_target_hours = daily_target[0].hours
         daily_target_diff = daily_target_hours - hours_today
         daily_target_indicator = (
-            _hours_to_hhmm_string(daily_target_diff)
-            + f"[/] / {_hours_to_hhmm_string(daily_target_hours, color=False)}"
+            _hours_to_hhmm_string(daily_target_diff) + f"[/] / {daily_target_hours}"
         )
 
     if HOURS:
@@ -62,7 +61,8 @@ def show_daily_summary(tasksToday: List[Task], tasksUnlogged: List[Task]):
         weekly_table.add_row("Open", "")
         weekly_table.add_row(
             "[italic]- week",
-            doneIndicator + f"{open_hours}:{minutes_open:02}{post_indicator}",
+            doneIndicator
+            + f"{open_hours}:{minutes_open:02}{post_indicator} [/]/ {HOURS}",
         )
         if daily_target_set:
             weekly_table.add_row(
