@@ -15,8 +15,8 @@ from utils import get_task_lengths_in_mins
 
 def _hours_to_hhmm_string(hours: float, color: bool = True) -> str:
     whole_hours = int(hours)
-    pre_indicator = "[green]" if whole_hours < 0 else "[yellow]"
-    post_indicator = " over" if whole_hours < 0 else ""
+    pre_indicator = "[green]" if hours <= 0 else "[yellow]"
+    post_indicator = " over" if hours < 0 else ""
     minutes = abs(int((hours - whole_hours) * 60))
     open_hours = str(abs(whole_hours))
     if color:
