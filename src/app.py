@@ -25,7 +25,7 @@ import pretty_print
 from calendar_utils import daterange, get_iso_week_dates, get_week_string
 from db_config import db
 from env import ARCHIVE_DIR, STATUSBAR_FILE
-from harvest import pull, pull_weekly_harvest_hours, push_task
+from harvest import api_to_json, pull, pull_weekly_harvest_hours, push_task
 from model import (
     DailyTarget,
     HarvestClient,
@@ -567,6 +567,8 @@ def main() -> bool | None:
 
     subparsers = parser.add_subparsers(dest="command")
 
+    api_parser = subparsers.add_parser("api", help="JSON dump of an API call")
+    api_parser.add_argument("url", type=str, help="Which API URL to get")
     subparsers.add_parser("start", help="Start a task")
     rename_parser = subparsers.add_parser("rename", help="Rename last task")
     rename_parser.add_argument("task_name", help="New name of the task")
@@ -643,6 +645,8 @@ def main() -> bool | None:
 
     with db:
         match args.command:
+            case "api":
+                print(api_to_json(args.url))
             case "start":
                 start_task(stopPrevious=True)
                 assign_task()

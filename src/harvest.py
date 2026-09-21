@@ -88,11 +88,10 @@ def pull_weekly_harvest_hours(KW=None):
     HarvestMeta.create(hours=hours)
 
 
-def pull_projects_clients_tasks():
+def api_to_json(url: str):
     assert all(var is not None for var in (EMAIL, HARVEST_ACCOUNT_ID, HARVEST_TOKEN)), (
         "Environment variable for Harvest upload is missing."
     )
-    url = "https://api.harvestapp.com/v2/users/me/project_assignments"
     request = urllib.request.Request(url=url, headers=HARVEST_HEADERS)
     for table in [HarvestProject, HarvestTask, HarvestClient]:
         table.drop_table()
@@ -103,7 +102,13 @@ def pull_projects_clients_tasks():
             raise Exception("Request to Harvest failed.")
 
         responseBody = response.read().decode("utf-8")
-        jsonResponse = json.loads(responseBody)
+        return responseBody
+
+
+def pull_projects_clients_tasks():
+    url = "https://api.harvestapp.com/v2/users/me/project_assignments"
+    responseBody = api_to_json(url)
+    jsonResponse = json.loads(responseBody)
 
     for projectAssignment in jsonResponse["project_assignments"]:
         clientId = str(projectAssignment["client"]["id"])
