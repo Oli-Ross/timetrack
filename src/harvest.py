@@ -112,8 +112,12 @@ def pull_projects_clients_tasks():
 
         projectId = str(projectAssignment["project"]["id"])
         projectName = str(projectAssignment["project"]["name"])
+        projectHourly = float(projectAssignment["hourly_rate"])
         project, _ = HarvestProject.get_or_create(
-            projectId=projectId, client=client, name=projectName
+            projectId=projectId,
+            client=client,
+            name=projectName,
+            hourly_rate=projectHourly,
         )
         for taskAssignment in projectAssignment["task_assignments"]:
             taskId = str(taskAssignment["task"]["id"])

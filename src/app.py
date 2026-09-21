@@ -27,6 +27,7 @@ from db_config import db
 from env import ARCHIVE_DIR, STATUSBAR_FILE
 from harvest import pull, pull_weekly_harvest_hours, push_task
 from model import (
+    ActiveHarvestProject,
     DailyTarget,
     HarvestClient,
     HarvestMeta,
@@ -378,6 +379,7 @@ def setup():
                 LogHistory,
                 HarvestMeta,
                 HarvestProject,
+                ActiveHarvestProject,
                 HarvestTask,
                 Preset,
                 User,
