@@ -102,7 +102,7 @@ def abort_task():
     print(f'Aborted "{name}".')
 
 
-def show_task(task: Task, showDate=False, showWeekDay=True):
+def show_task(task: Task, showDate=False, showWeekDay=True, showUUID=False):
     if showDate:
         formatString = "%a %-d.%-m.: %-H:%M"
     elif showWeekDay:
@@ -119,7 +119,12 @@ def show_task(task: Task, showDate=False, showWeekDay=True):
         logStatus = ""
     else:
         logStatus = "*"
-    return start_time + end_time + f" {task.name}" + logStatus
+
+    if showUUID:
+        uuid = f"({task.uuid}) "
+    else:
+        uuid = ""
+    return uuid + start_time + end_time + f" {task.name}" + logStatus
 
 
 def get_unlogged_tasks(includeRunning=False):
@@ -144,7 +149,7 @@ def show_unlogged_tasks():
 def show_all_tasks():
     print("All recorded tasks:")
     for task in Task.select():
-        print(show_task(task, showDate=True))
+        print(show_task(task, showDate=True, showUUID=True))
 
 
 def unlog_tasks():
@@ -462,11 +467,13 @@ def add_old_task():
     assign_task()
 
 
-def delete_task():
+def delete_task(uuid: str | None = None):
     tasks = get_weeks_tasks()
-    uuid = fzf(
-        {task.uuid: show_task(task) for task in tasks}, prompt="Which task to delete?"
-    )
+    if not uuid:
+        uuid = fzf(
+            {task.uuid: show_task(task) for task in tasks},
+            prompt="Which task to delete?",
+        )
     task = Task.select().where(Task.uuid == uuid).limit(1)[0]
     task.delete_instance()
 
@@ -590,7 +597,14 @@ def main() -> bool | None:
     subparsers.add_parser("setup", help="Initialize the database (first-time only)")
     subparsers.add_parser("edit", help="Edit a task")
     subparsers.add_parser("add", help="Add a task")
-    subparsers.add_parser("delete", help="Delete a task")
+    delete_parser = subparsers.add_parser("delete", help="Delete a task")
+    delete_parser.add_argument(
+        "--uuid",
+        type=str,
+        help="UUID of the task to be deleted",
+        default=None,
+        required=False,
+    )
     preset_parser = subparsers.add_parser("preset", help="Manage/use presets")
     preset_parser.add_argument(
         "preset_command",
@@ -670,7 +684,7 @@ def main() -> bool | None:
             case "add":
                 add_old_task()
             case "delete":
-                delete_task()
+                delete_task(args.uuid)
             case "target":
                 match args.target_command:
                     case "change":
