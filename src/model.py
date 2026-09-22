@@ -52,6 +52,9 @@ class HarvestProject(pw.Model):
     client = pw.ForeignKeyField(HarvestClient, backref="projects")
     name = pw.CharField()
     hourly_rate = pw.FloatField()
+    budget = pw.FloatField(null=True)
+    budget_remaining = pw.FloatField(null=True)
+    budget_spent = pw.FloatField(null=True)
 
     class Meta:
         database = db

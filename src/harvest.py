@@ -2,8 +2,10 @@ import json
 import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta
+from multiprocessing import allow_connection_pickling
 from typing import TypedDict
 
+from db_config import db
 from env import (
     EMAIL,
     HARVEST_ACCOUNT_ID,
@@ -93,9 +95,6 @@ def api_to_json(url: str):
         "Environment variable for Harvest upload is missing."
     )
     request = urllib.request.Request(url=url, headers=HARVEST_HEADERS)
-    for table in [HarvestProject, HarvestTask, HarvestClient]:
-        table.drop_table()
-        table.create_table()
     with urllib.request.urlopen(request, timeout=5) as response:
         responseCode = response.getcode()
         if responseCode != 200:
@@ -106,11 +105,17 @@ def api_to_json(url: str):
 
 
 def pull_projects_clients_tasks():
-    url = "https://api.harvestapp.com/v2/users/me/project_assignments"
-    responseBody = api_to_json(url)
-    jsonResponse = json.loads(responseBody)
+    projectAssignmentAPIResponse = json.loads(
+        api_to_json("https://api.harvestapp.com/v2/users/me/project_assignments")
+    )
+    projectBudgetAPIResponse = json.loads(
+        api_to_json("https://api.harvestapp.com/v2/reports/project_budget")
+    )["results"]
+    projects_budgets = {
+        str(result["project_id"]): result for result in projectBudgetAPIResponse
+    }
 
-    for projectAssignment in jsonResponse["project_assignments"]:
+    for projectAssignment in projectAssignmentAPIResponse["project_assignments"]:
         clientId = str(projectAssignment["client"]["id"])
         clientName = str(projectAssignment["client"]["name"])
         client, _ = HarvestClient.get_or_create(clientId=clientId, name=clientName)
@@ -118,11 +123,23 @@ def pull_projects_clients_tasks():
         projectId = str(projectAssignment["project"]["id"])
         projectName = str(projectAssignment["project"]["name"])
         projectHourly = float(projectAssignment["hourly_rate"])
+
+        remote_project = projects_budgets.get(str(projectId))
+        budget = remote_project["budget"] if remote_project else None
+        budget_remaining = (
+            remote_project["budget_remaining"] if remote_project else None
+        )
+        budget_spent = remote_project["budget_spent"] if remote_project else None
         project, _ = HarvestProject.get_or_create(
             projectId=projectId,
-            client=client,
-            name=projectName,
-            hourly_rate=projectHourly,
+            defaults={
+                "client": client,
+                "name": projectName,
+                "hourly_rate": projectHourly,
+                "budget": budget,
+                "budget_spent": budget_spent,
+                "budget_remaining": budget_remaining,
+            },
         )
         for taskAssignment in projectAssignment["task_assignments"]:
             taskId = str(taskAssignment["task"]["id"])
@@ -194,5 +211,9 @@ def push_task(task):
 
 def pull():
     pull_weekly_harvest_hours()
+
+    for table in [HarvestProject, HarvestTask, HarvestClient]:
+        table.drop_table()
+        table.create_table()
     pull_projects_clients_tasks()
     print("Updated local db + weekly hours.")

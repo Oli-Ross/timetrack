@@ -540,8 +540,7 @@ def delete_target() -> None:
 
 
 def list_projects() -> None:
-    for x in HarvestProject.select():
-        print(f"ID: {x.projectId} \tName: {x.name:30}\t Rate: {x.hourly_rate} $/h")
+    pretty_print.show_budgets()
 
 
 def main() -> bool | None:
@@ -632,11 +631,6 @@ def main() -> bool | None:
         "--kw", type=int, help="Calendar week to print for `show week`.", default=None
     )
     project_parser = subparsers.add_parser("project", help="Show project details")
-    project_parser.add_argument(
-        "project_command",
-        help="project command",
-        choices=["list", "activate", "deactivate", "budgets"],
-    )
 
     args = parser.parse_args()
 
@@ -719,15 +713,7 @@ def main() -> bool | None:
                     case "list":
                         pretty_print.list_presets()
             case "project":
-                match args.project_command:
-                    case "list":
-                        list_projects()
-                    case "activate":
-                        pass
-                    case "deactivate":
-                        pass
-                    case "budgets":
-                        pass
+                list_projects()
             case _:
                 print_day_summary()
 
@@ -744,7 +730,7 @@ if __name__ == "__main__":
             else:
                 sys.exit(1)
     except Exception as e:
-        print(str(e))
+        print("Exception caught: " + str(e))
         sys.exit(1)
     except KeyboardInterrupt:
         sys.exit(1)

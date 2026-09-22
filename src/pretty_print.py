@@ -4,12 +4,13 @@ from typing import List
 from rich.columns import Columns
 from rich.console import Console, Group
 from rich.panel import Panel
+from rich.progress_bar import ProgressBar
 from rich.table import Table
 from rich.text import Text
 
 from calendar_utils import get_week_string
 from env import HOURS
-from model import DailyTarget, HarvestMeta, Preset, Task
+from model import DailyTarget, HarvestMeta, HarvestProject, Preset, Task
 from utils import get_task_lengths_in_mins
 
 
@@ -130,6 +131,76 @@ def list_presets():
     panel = Panel(
         table,
         title=f"[magenta]Presets",
+        padding=(1, 1),
+    )
+    Console().print(panel)
+
+
+def _compact_int(n: int) -> str:
+    return f"{n / 1000:5.1f}k".replace(".", ",")
+
+
+def show_budgets():
+    table = Table(header_style="green", show_edge=False, border_style="dim")
+    table.add_column("Name", min_width=4, max_width=12)
+    table.add_column("Client", min_width=4, max_width=12)
+    table.add_column("My Rate", width=8)
+    table.add_column("Budget", min_width=27)
+    table.add_column("Hours left", min_width=4, max_width=6)
+    project_output_none = []
+    project_output = []
+    for x in HarvestProject.select():
+        budget = "-"
+        budget_text = " ", " "
+        if x.budget:
+            fraction = x.budget_spent / x.budget
+            budget_color = "green"
+            if fraction > 1:
+                budget_color = "magenta"
+            elif fraction > 0.7:
+                budget_color = "yellow"
+            budget_text = (
+                f"[{budget_color}]  {100 * fraction:5.1f}%",
+                f" / {_compact_int(x.budget)} $",
+            )
+            budget = ProgressBar(
+                total=1,
+                completed=fraction,
+                width=8,
+                complete_style=budget_color,
+                finished_style=budget_color,
+            )
+        name = f"{x.name}"
+        client = f"{x.client.name}"
+        hours_left = (
+            f"{x.budget_remaining / x.hourly_rate:6.1f}"
+            if x.budget_remaining and x.hourly_rate
+            else "-"
+        )
+        row = (
+            f"{name:35.35}",
+            client,
+            f"{int(x.hourly_rate):>3} $/h",
+            budget,
+            budget_text,
+            hours_left,
+        )
+        if x.budget:
+            project_output.append(row)
+        else:
+            project_output_none.append(row)
+    for row in project_output:
+        budget_cell = Table.grid()
+        budget_cell.add_column()
+        budget_cell.add_column()
+        budget_cell.add_column()
+        budget_cell.add_row(row[3], row[4][0], row[4][1])
+        table.add_row(row[0], row[1], row[2], budget_cell, row[5])
+        table.add_section()
+
+    panel = Panel(
+        table,
+        title="[magenta]Budgets",
         padding=(1, 1),
     )
     Console().print(panel)
