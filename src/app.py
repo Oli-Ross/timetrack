@@ -637,7 +637,7 @@ def main() -> bool | None:
     global QUIET
     QUIET = args.quiet
 
-    with db:
+    with db.connection_context():
         match args.command:
             case "api":
                 print(api_to_json(args.url))
