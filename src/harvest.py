@@ -57,9 +57,6 @@ def get_user_id() -> str:
 
 def pull_weekly_harvest_hours(KW=None):
     user_id = get_user_id()
-    assert all(var is not None for var in (EMAIL, HARVEST_ACCOUNT_ID, HARVEST_TOKEN)), (
-        "Environment variable for Harvest upload is missing."
-    )
     if KW:
         today = datetime.fromisocalendar(datetime.now().year, KW, 2)
     else:
@@ -69,15 +66,7 @@ def pull_weekly_harvest_hours(KW=None):
     fromDate = monday.strftime("%Y%m%d")
     toDate = friday.strftime("%Y%m%d")
     url = f"https://api.harvestapp.com/v2/reports/time/team?from={fromDate}&to={toDate}"
-    request = urllib.request.Request(url=url, headers=HARVEST_HEADERS)
-    with urllib.request.urlopen(request, timeout=5) as response:
-        responseCode = response.getcode()
-        if responseCode != 200:
-            raise Exception("Request to Harvest failed.")
-
-        responseBody = response.read().decode("utf-8")
-        jsonResponse = json.loads(responseBody)
-
+    jsonResponse = json.loads(api_to_json(url))
     if not jsonResponse["results"] or user_id not in [
         str(x["user_id"]) for x in jsonResponse["results"]
     ]:
