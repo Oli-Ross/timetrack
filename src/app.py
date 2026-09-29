@@ -20,6 +20,8 @@ from datetime import datetime, timedelta
 from typing import Tuple
 
 from peewee import fn
+from rich.live import Live
+from rich.panel import Panel
 
 import pretty_print
 from calendar_utils import daterange, get_iso_week_dates, get_week_string
@@ -331,11 +333,15 @@ def push_unlogged_tasks():
         print("No tasks to be uploaded.")
         return
     LogHistory.delete().execute()
-    for task in unloggedTasks:
-        push_task(task)
-        task.is_logged = True
-        task.save()
-        LogHistory.create(uuid=task.uuid)
+    with Live(Panel("Pushing tasks..."), refresh_per_second=10) as live:
+        for i, task in enumerate(unloggedTasks):
+            push_task(task)
+            live.update(
+                Panel(f"Progress: {i + 1} / {len(unloggedTasks)} tasks pushed.")
+            )
+            task.is_logged = True
+            task.save()
+            LogHistory.create(uuid=task.uuid)
     pull_weekly_harvest_hours()
     print("Successfully pushed all unlogged tasks.")
 

@@ -200,9 +200,5 @@ def show_budgets():
         table.add_row(row[0], row[1], row[2], budget_cell, row[5])
         table.add_section()
 
-    panel = Panel(
-        table,
-        title="[magenta]Budgets",
-        padding=(1, 1),
-    )
+    panel = Panel(table, title="[magenta]Budgets", padding=(1, 1), expand=False)
     Console().print(panel)
