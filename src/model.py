@@ -60,6 +60,10 @@ class HarvestProject(pw.Model):
         database = db
         table_name = "harvest_projects"
 
+    @classmethod
+    def get(cls, projectId: int):
+        return cls.select().where(cls.projectId == projectId)[0]
+
 
 class HarvestTask(pw.Model):
     taskId = pw.IntegerField()

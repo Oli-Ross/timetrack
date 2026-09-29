@@ -92,6 +92,7 @@ def show_daily_summary(tasksToday: List[Task], tasksUnlogged: List[Task]):
     today.add_column("Name")
     today.add_column("When")
     today.add_column("Time")
+    today.add_column("Project")
 
     formatString = "%H:%M"
 
@@ -106,6 +107,7 @@ def show_daily_summary(tasksToday: List[Task], tasksUnlogged: List[Task]):
             f"{time_elapsed.seconds // 3600}:{(time_elapsed.seconds // 60) % 60:02}"
             if time_elapsed
             else "",
+            HarvestProject.get(task.projectId).name,
         )
     this_day = datetime.now().strftime("%A")
     if tasksToday:
