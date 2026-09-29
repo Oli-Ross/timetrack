@@ -5,6 +5,9 @@ from datetime import datetime, timedelta
 from multiprocessing import allow_connection_pickling
 from typing import TypedDict
 
+from rich.live import Live
+from rich.panel import Panel
+
 from db_config import db
 from env import (
     EMAIL,
@@ -199,10 +202,12 @@ def push_task(task):
 
 
 def pull():
-    pull_weekly_harvest_hours()
+    with Live(Panel("Pulling weekly hours...", expand=False)) as live:
+        pull_weekly_harvest_hours()
 
-    for table in [HarvestProject, HarvestTask, HarvestClient]:
-        table.drop_table()
-        table.create_table()
-    pull_projects_clients_tasks()
-    print("Updated local db + weekly hours.")
+        for table in [HarvestProject, HarvestTask, HarvestClient]:
+            table.drop_table()
+            table.create_table()
+        live.update(Panel("Pulling projects + clients...", expand=False))
+        pull_projects_clients_tasks()
+        live.update(Panel("Updated local db + weekly hours.", expand=False))
