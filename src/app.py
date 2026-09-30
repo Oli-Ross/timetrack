@@ -47,7 +47,7 @@ from utils import (
 )
 
 
-def get_weeks_tasks(KW=None):
+def get_weeks_tasks(KW=None) -> list[Task]:
     if KW:
         this_week = str(KW).lstrip("0")
     else:
@@ -62,13 +62,16 @@ def get_weeks_tasks(KW=None):
     return tasks
 
 
-def resume_task():
+def resume_task(resume_week: bool = False):
     assert not is_task_running(), "There's currently a task running!"
 
     today = datetime.today()
-    tasks = Task.select().where(
-        fn.strftime("%Y-%m-%d", Task.start_time) == today.strftime("%Y-%m-%d")
-    )
+    if resume_week:
+        tasks = get_weeks_tasks()
+    else:
+        tasks = Task.select().where(
+            fn.strftime("%Y-%m-%d", Task.start_time) == today.strftime("%Y-%m-%d")
+        )
 
     uuid = fzf({task.uuid: task.name for task in tasks}, prompt="Resume task?")
     task = [task for task in tasks if task.uuid == uuid][0]
@@ -603,7 +606,18 @@ def main() -> bool | None:
     )
     subparsers.add_parser("abort", help="Abort current task")
     subparsers.add_parser("extend", help="Set the last completed task to running")
-    subparsers.add_parser("resume", help="Start a new instance of a past task")
+    resume_parser = subparsers.add_parser(
+        "resume", help="Start a new instance of a past task"
+    )
+    resume_parser.add_argument(
+        "-w",
+        "--week",
+        help="Resume from any task this week",
+        action="store_const",
+        dest="resume_week",
+        const=True,
+        default=False,
+    )
     subparsers.add_parser("push", help="Upload unlogged tasks to Harvest")
     split_parser = subparsers.add_parser("split", help="Partially re-assign last task")
     split_parser.add_argument("task_name", help="New name of the task")
@@ -652,7 +666,7 @@ def main() -> bool | None:
                 assign_task()
                 update_statusbar()
             case "resume":
-                resume_task()
+                resume_task(args.resume_week)
                 update_statusbar()
             case "extend":
                 extend_task()
