@@ -754,11 +754,7 @@ def main() -> bool | None:
 if __name__ == "__main__":
     try:
         ret = main()
-        if isinstance(ret, bool):
-            if ret:
-                sys.exit(0)
-            else:
-                sys.exit(1)
+        sys.exit(ret == True)
     except UserInfoError as e:
         print(str(e))
         sys.exit(1)
