@@ -1,6 +1,7 @@
-from utils import get_short_uuid
-from model import Task
 from datetime import datetime
+
+from model import Task
+from utils import get_short_uuid
 
 
 def is_task_running():
@@ -22,7 +23,9 @@ def stop_task():
     print(f'Ended "{task.name}" (ran for {diff_mins} mins).')
 
 
-def start_task(taskId=None, projectId=None, stopPrevious=False, taskName=None):
+def start_task(
+    taskId=None, projectId=None, stopPrevious=False, taskName=None, backfill=False
+):
     name = taskName or input("Name? ")
     if is_task_running():
         if stopPrevious:
@@ -30,13 +33,22 @@ def start_task(taskId=None, projectId=None, stopPrevious=False, taskName=None):
         else:
             raise RuntimeError("There's currently a task running!")
 
+    if backfill:
+        last = get_last_task()
+        start_time = last.end_time
+    else:
+        start_time = datetime.now()
     Task.create(
         uuid=get_short_uuid(),
-        start_time=datetime.now(),
+        start_time=start_time,
         end_time=None,
         name=name,
         is_logged=False,
         taskId=taskId,
         projectId=projectId,
     )
-    print(f'Started "{name}".')
+    print(
+        f'Started "{name}"'
+        + (f" from {start_time.strftime('%H:%M')}" if backfill else "")
+        + "."
+    )

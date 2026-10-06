@@ -577,7 +577,15 @@ def main() -> bool | None:
 
     api_parser = subparsers.add_parser("api", help="JSON dump of an API call")
     api_parser.add_argument("url", type=str, help="Which API URL to get")
-    subparsers.add_parser("start", help="Start a task")
+    start_parser = subparsers.add_parser("start", help="Start a task")
+    start_parser.add_argument(
+        "--backfill",
+        help="Start from last stopped task, not from now.",
+        action="store_const",
+        dest="backfill",
+        const=True,
+        default=False,
+    )
     rename_parser = subparsers.add_parser("rename", help="Rename last task")
     rename_parser.add_argument("task_name", help="New name of the task")
     show_parser = subparsers.add_parser("show", help="Show past tasks")
@@ -662,7 +670,7 @@ def main() -> bool | None:
             case "api":
                 print(api_to_json(args.url))
             case "start":
-                start_task(stopPrevious=True)
+                start_task(stopPrevious=True, backfill=args.backfill)
                 assign_task()
                 update_statusbar()
             case "resume":
