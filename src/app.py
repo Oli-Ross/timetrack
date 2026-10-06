@@ -2,6 +2,8 @@
 
 import builtins
 
+from errors import UserInfoError
+
 _real_print = builtins.print
 QUIET = False
 
@@ -430,7 +432,7 @@ def edit_task():
             task.end_time = task.end_time.replace(hour=hour)
             task.end_time = task.end_time.replace(minute=minute)
         case _:
-            raise ValueError("Something went wrong.")
+            raise ValueError
     task.save()
     update_statusbar()
 
@@ -757,8 +759,8 @@ if __name__ == "__main__":
                 sys.exit(0)
             else:
                 sys.exit(1)
-    except Exception as e:
-        print("Exception caught: " + str(e))
+    except UserInfoError as e:
+        print(str(e))
         sys.exit(1)
     except KeyboardInterrupt:
         sys.exit(1)

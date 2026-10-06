@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from errors import UserInfoError
 from model import Task
 from utils import get_short_uuid
 
@@ -31,7 +32,7 @@ def start_task(
         if stopPrevious:
             stop_task()
         else:
-            raise RuntimeError("There's currently a task running!")
+            raise UserInfoError("There's currently a task running!")
 
     if backfill:
         last = get_last_task()

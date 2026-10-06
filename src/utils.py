@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime
 from typing import Dict, List
 
+from errors import UserInfoError
 from model import Task
 
 
@@ -27,11 +28,11 @@ def fzf(input: Dict, prompt=None) -> str:
     cmd_line.append("--preview-window=hidden")
     cmd_line.append("--delimiter=:")
     cmd_line.append("--with-nth=2..")
-    cmd_line.append('--layout=reverse')
-    cmd_line.append('--margin=1')
-    cmd_line.append('--height=40%')
-    cmd_line.append('--border')
-    cmd_line.append('--padding=1')
+    cmd_line.append("--layout=reverse")
+    cmd_line.append("--margin=1")
+    cmd_line.append("--height=40%")
+    cmd_line.append("--border")
+    cmd_line.append("--padding=1")
     val = subprocess.run(
         cmd_line,
         input=fzfInput,
@@ -39,7 +40,7 @@ def fzf(input: Dict, prompt=None) -> str:
         capture_output=True,
     ).stdout.strip()
     if not val:
-        raise KeyboardInterrupt("Aborted or `fzf` failed.")
+        raise UserInfoError("Aborted or `fzf` failed.")
     return val.split(":")[0]
 
 

@@ -16,6 +16,7 @@ from env import (
     PROJECT_ID,
     TASK_ID,
 )
+from errors import UserInfoError
 from model import HarvestClient, HarvestMeta, HarvestProject, HarvestTask, User
 from utils import get_task_length_in_mins
 
@@ -48,7 +49,7 @@ def get_user_id() -> str:
         with urllib.request.urlopen(request, timeout=5) as response:
             responseCode = response.getcode()
             if responseCode != 200:
-                raise Exception("Request to Harvest failed.")
+                raise UserInfoError("Request to Harvest failed.")
 
             responseBody = response.read().decode("utf-8")
             jsonResponse = json.loads(responseBody)
@@ -90,7 +91,7 @@ def api_to_json(url: str):
     with urllib.request.urlopen(request, timeout=5) as response:
         responseCode = response.getcode()
         if responseCode != 200:
-            raise Exception("Request to Harvest failed.")
+            raise UserInfoError("Request to Harvest failed.")
 
         responseBody = response.read().decode("utf-8")
         return responseBody
@@ -156,7 +157,7 @@ def push_harvest_task(data: RemoteHarvestTask):
             responseBody = response.read().decode("utf-8")
             jsonResponse = json.loads(responseBody)
             print(json.dumps(jsonResponse, sort_keys=True, indent=2))
-            raise Exception(
+            raise UserInfoError(
                 f"Request failed: Couldn't push task {task.uuid} to Harvest."
             )
 
