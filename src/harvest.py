@@ -158,7 +158,7 @@ def push_harvest_task(data: RemoteHarvestTask):
             jsonResponse = json.loads(responseBody)
             print(json.dumps(jsonResponse, sort_keys=True, indent=2))
             raise UserInfoError(
-                f"Request failed: Couldn't push task {task.uuid} to Harvest."
+                f"Request failed: Couldn't push task {data['notes']} to Harvest."
             )
 
 
