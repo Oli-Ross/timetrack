@@ -26,7 +26,12 @@ from rich.live import Live
 from rich.panel import Panel
 
 import pretty_print
-from calendar_utils import daterange, get_iso_week_dates, get_week_string
+from calendar_utils import (
+    daterange,
+    get_iso_week_dates,
+    get_time_from_user,
+    get_week_string,
+)
 from db_config import db
 from env import ARCHIVE_DIR, STATUSBAR_FILE
 from harvest import api_to_json, pull, pull_weekly_harvest_hours, push_task
@@ -399,11 +404,6 @@ def setup():
         pull()
 
 
-def get_time_from_user() -> Tuple[int, int]:
-    inp = input("In format %H:%M, which time? ").split(":")
-    return int(inp[0]), int(inp[1])
-
-
 def edit_task():
     tasks = get_weeks_tasks()
     uuid = fzf({task.uuid: show_task(task) for task in tasks}, prompt="Which task?")
@@ -606,7 +606,16 @@ def main() -> bool | None:
     status_parser = subparsers.add_parser(
         "status", help="Show info about currently running task"
     )
-    subparsers.add_parser("stop", help="Stop current task")
+    stop_parser = subparsers.add_parser("stop", help="Stop current task")
+    stop_parser.add_argument(
+        "--shorten",
+        "-s",
+        help="Enter a manual time when this task ended, instead of now.",
+        action="store_const",
+        dest="shorten_stop",
+        const=True,
+        default=False,
+    )
     subparsers.add_parser("pull", help="Sync Harvest data back to local db")
     assign_parser = subparsers.add_parser(
         "assign", help="Assign last task to Harvest task"
@@ -682,7 +691,7 @@ def main() -> bool | None:
                 extend_task()
                 update_statusbar()
             case "stop":
-                stop_task()
+                stop_task(args.shorten_stop)
                 update_statusbar()
             case "abort":
                 abort_task()

@@ -1,4 +1,4 @@
-from datetime import datetime, date, timedelta
+from datetime import date, datetime, timedelta
 
 
 def get_week_string(KW: str | None = None) -> str:
@@ -21,3 +21,8 @@ def get_iso_week_dates(iso_year, iso_week):
     start_date = datetime.strptime(f"{iso_year}-W{iso_week}-1", "%G-W%V-%u").date()
     end_date = start_date + timedelta(days=6)  # End of the week
     return start_date, end_date
+
+
+def get_time_from_user() -> tuple[int, int]:
+    inp = input("In format %H:%M, which time? ").split(":")
+    return int(inp[0]), int(inp[1])

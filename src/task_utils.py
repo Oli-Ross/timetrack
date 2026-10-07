@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from calendar_utils import get_time_from_user
 from errors import UserInfoError
 from model import Task
 from utils import get_short_uuid
@@ -13,14 +14,19 @@ def get_last_task() -> Task:
     return Task.select().order_by(Task.start_time.desc()).limit(1)[0]
 
 
-def stop_task():
+def stop_task(shorten_stop: bool = False):
     assert is_task_running(), "No task currently running!"
 
     task = get_last_task()
-    task.end_time = datetime.now()
+    end_time = datetime.now()
+    if shorten_stop:
+        hour, minute = get_time_from_user()
+        end_time = end_time.replace(hour=hour, minute=minute)
+
+    task.end_time = end_time
     task.save()
 
-    diff_mins = int(((datetime.now() - task.start_time).total_seconds()) / 60)
+    diff_mins = int(((end_time - task.start_time).total_seconds()) / 60)
     print(f'Ended "{task.name}" (ran for {diff_mins} mins).')
 
 
