@@ -69,7 +69,7 @@ def get_weeks_tasks(KW=None) -> list[Task]:
     return tasks
 
 
-def resume_task(resume_week: bool = False):
+def resume_task(resume_week: bool = False, backfill: bool = False):
     assert not is_task_running(), "There's currently a task running!"
 
     today = datetime.today()
@@ -83,7 +83,12 @@ def resume_task(resume_week: bool = False):
     uuid = fzf({task.uuid: task.name for task in tasks}, prompt="Resume task?")
     task = [task for task in tasks if task.uuid == uuid][0]
     print(f"Resuming {task.name}")
-    start_task(taskId=task.taskId, projectId=task.projectId, taskName=task.name)
+    start_task(
+        taskId=task.taskId,
+        projectId=task.projectId,
+        taskName=task.name,
+        backfill=backfill,
+    )
 
 
 def extend_task():
@@ -582,6 +587,7 @@ def main() -> bool | None:
     start_parser = subparsers.add_parser("start", help="Start a task")
     start_parser.add_argument(
         "--backfill",
+        "-b",
         help="Start from last stopped task, not from now.",
         action="store_const",
         dest="backfill",
@@ -637,6 +643,15 @@ def main() -> bool | None:
         const=True,
         default=False,
     )
+    resume_parser.add_argument(
+        "--backfill",
+        "-b",
+        help="Start from last stopped task, not from now.",
+        action="store_const",
+        dest="backfill",
+        const=True,
+        default=False,
+    )
     subparsers.add_parser("push", help="Upload unlogged tasks to Harvest")
     split_parser = subparsers.add_parser("split", help="Partially re-assign last task")
     split_parser.add_argument("task_name", help="New name of the task")
@@ -685,7 +700,7 @@ def main() -> bool | None:
                 assign_task()
                 update_statusbar()
             case "resume":
-                resume_task(args.resume_week)
+                resume_task(args.resume_week, args.backfill)
                 update_statusbar()
             case "extend":
                 extend_task()
