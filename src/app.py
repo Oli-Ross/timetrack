@@ -471,8 +471,9 @@ def add_old_task():
     end_time = datetime.strptime(weekday, weekdayformat) + timedelta(
         hours=hourEnd, minutes=minuteEnd
     )
+    uuid = get_short_uuid()
     task_data = {
-        "uuid": get_short_uuid(),
+        "uuid": uuid,
         "start_time": start_time,
         "end_time": end_time,
         "name": name,
@@ -481,7 +482,7 @@ def add_old_task():
         "projectId": None,
     }
     Task.create(**task_data)
-    assign_task()
+    assign_task(uuid)
 
 
 def delete_task(uuid: str | None = None):
