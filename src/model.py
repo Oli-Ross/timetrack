@@ -16,7 +16,6 @@ class Task(pw.Model):
     name = pw.CharField()
     start_time = pw.DateTimeField()
     end_time = pw.DateTimeField(null=True)
-    name = pw.CharField()
     is_logged = pw.BooleanField()
     taskId = pw.IntegerField(null=True)
     projectId = pw.IntegerField(null=True)
