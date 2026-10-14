@@ -631,7 +631,19 @@ def main() -> bool | None:
         "--uuid", type=str, help="UUID to re-assign", default=None
     )
     subparsers.add_parser("abort", help="Abort current task")
-    subparsers.add_parser("extend", help="Set the last completed task to running")
+    extend_parser = subparsers.add_parser(
+        "extend", help="Set the last completed task to running"
+    )
+    extend_parser.add_argument(
+        "--stop",
+        "-s",
+        help="Stop extended task now.",
+        action="store_const",
+        dest="stop_extend",
+        const=True,
+        default=False,
+    )
+
     resume_parser = subparsers.add_parser(
         "resume", help="Start a new instance of a past task"
     )
@@ -705,7 +717,10 @@ def main() -> bool | None:
                 update_statusbar()
             case "extend":
                 extend_task()
-                update_statusbar()
+                if args.stop_extend:
+                    stop_task()
+                else:
+                    update_statusbar()
             case "stop":
                 stop_task(args.shorten_stop)
                 update_statusbar()
