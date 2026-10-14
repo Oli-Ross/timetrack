@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import datetime
 from typing import List
 
@@ -11,7 +12,8 @@ from rich.text import Text
 from calendar_utils import get_week_string
 from env import HOURS
 from model import DailyTarget, HarvestMeta, HarvestProject, Preset, Task
-from utils import get_task_lengths_in_mins
+from task_utils import get_weeks_tasks
+from utils import get_task_length_in_mins, get_task_lengths_in_mins
 
 
 def _hours_to_hhmm_string(hours: float, color: bool = True) -> str:
@@ -120,7 +122,36 @@ def show_daily_summary(tasksToday: List[Task], tasksUnlogged: List[Task]):
         padding=(1, 1),
     )
 
-    columns = Columns([today_panel, weekly_panel])
+    weekly_stat_table = Table(header_style="green", show_edge=False)
+    weekly_stat_table.add_column("Project")
+    weekly_stat_table.add_column("Percentage")
+    weeks_stats = defaultdict(int)
+    for task in get_weeks_tasks():
+        weeks_stats[str(HarvestProject.get(task.projectId).name)] += (
+            get_task_length_in_mins(task)
+        )
+    for projectName, projectTime in weeks_stats.items():
+        bar_cell = Table.grid()
+        bar_cell.add_column()
+        bar_cell.add_column()
+        perc = 100 * projectTime / (hours_worked * 60)
+        bar_cell.add_row(
+            f"{perc:4.01f} % ",
+            ProgressBar(
+                total=1,
+                completed=perc / 100,
+                width=8,
+                complete_style="green",
+                finished_style="green",
+            ),
+        )
+        weekly_stat_table.add_row(projectName, bar_cell)
+    weekly_stat_panel = Panel(
+        weekly_stat_table,
+        title="[magenta]This week's distribution",
+        padding=(1, 1),
+    )
+    columns = Columns([today_panel, Group(weekly_panel, weekly_stat_panel)])
     Console().print(columns)
 
 

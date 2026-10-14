@@ -46,27 +46,18 @@ from model import (
     Task,
     User,
 )
-from task_utils import get_last_task, is_task_running, start_task, stop_task
+from task_utils import (
+    get_last_task,
+    get_weeks_tasks,
+    is_task_running,
+    start_task,
+    stop_task,
+)
 from utils import (
     fzf,
     get_short_uuid,
     get_task_lengths_in_mins,
 )
-
-
-def get_weeks_tasks(KW=None) -> list[Task]:
-    if KW:
-        this_week = str(KW).lstrip("0")
-    else:
-        this_week = str(datetime.today().date().isocalendar()[1])
-    this_year = str(datetime.today().date().isocalendar()[0])
-    start_date, end_date = get_iso_week_dates(this_year, this_week)
-    tasks = (
-        Task.select()
-        .where((Task.start_time >= start_date) & (Task.start_time <= end_date))
-        .order_by(Task.start_time)
-    )
-    return tasks
 
 
 def resume_task(resume_week: bool = False, backfill: bool = False):

@@ -1,9 +1,24 @@
 from datetime import datetime
 
-from calendar_utils import get_time_from_user
+from calendar_utils import get_iso_week_dates, get_time_from_user
 from errors import UserInfoError
 from model import Task
 from utils import get_short_uuid
+
+
+def get_weeks_tasks(KW=None) -> list[Task]:
+    if KW:
+        this_week = str(KW).lstrip("0")
+    else:
+        this_week = str(datetime.today().date().isocalendar()[1])
+    this_year = str(datetime.today().date().isocalendar()[0])
+    start_date, end_date = get_iso_week_dates(this_year, this_week)
+    tasks = (
+        Task.select()
+        .where((Task.start_time >= start_date) & (Task.start_time <= end_date))
+        .order_by(Task.start_time)
+    )
+    return tasks
 
 
 def is_task_running():
