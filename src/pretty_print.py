@@ -1,3 +1,4 @@
+import json
 from collections import defaultdict
 from datetime import datetime
 from typing import List
@@ -11,6 +12,7 @@ from rich.text import Text
 
 from calendar_utils import get_week_string
 from env import HOURS
+from harvest import api_to_json_string
 from model import DailyTarget, HarvestMeta, HarvestProject, Preset, Task
 from task_utils import get_weeks_tasks
 from utils import get_task_length_in_mins, get_task_lengths_in_mins
@@ -136,7 +138,7 @@ def show_daily_summary(tasksToday: List[Task], tasksUnlogged: List[Task]):
         bar_cell.add_column()
         perc = 100 * projectTime / (hours_worked * 60)
         bar_cell.add_row(
-            f"{perc:4.01f} % ",
+            f"{perc:4.00f} % ",
             ProgressBar(
                 total=1,
                 completed=perc / 100,
@@ -232,4 +234,19 @@ def show_budgets():
         table.add_section()
 
     panel = Panel(table, title="[magenta]Budgets", padding=(1, 1), expand=False)
+    Console().print(panel)
+
+
+def show_pto():
+    table = Table()
+    table.add_column("Type")
+    table.add_column("Taken")
+    table.add_column("Cap")
+    res = api_to_json_string("https://api.harvestapp.com/v2/pto/balances")
+    res = json.loads(res)
+    for pto in res["balances"]:
+        taken = str(pto["used_days"])
+        cap = "-" if pto["is_unlimited"] else str(pto["available_days"])
+        table.add_row(pto["pto_type"]["name"], taken, cap)
+    panel = Panel(table, title="[magenta]PTO", padding=(1, 1), expand=False)
     Console().print(panel)

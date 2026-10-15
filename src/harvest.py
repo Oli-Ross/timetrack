@@ -70,7 +70,7 @@ def pull_weekly_harvest_hours(KW=None):
     fromDate = monday.strftime("%Y%m%d")
     toDate = friday.strftime("%Y%m%d")
     url = f"https://api.harvestapp.com/v2/reports/time/team?from={fromDate}&to={toDate}"
-    jsonResponse = json.loads(api_to_json(url))
+    jsonResponse = json.loads(api_to_json_string(url))
     if not jsonResponse["results"] or user_id not in [
         str(x["user_id"]) for x in jsonResponse["results"]
     ]:
@@ -83,7 +83,7 @@ def pull_weekly_harvest_hours(KW=None):
     HarvestMeta.create(hours=hours)
 
 
-def api_to_json(url: str):
+def api_to_json_string(url: str):
     assert all(var is not None for var in (EMAIL, HARVEST_ACCOUNT_ID, HARVEST_TOKEN)), (
         "Environment variable for Harvest upload is missing."
     )
@@ -99,10 +99,10 @@ def api_to_json(url: str):
 
 def pull_projects_clients_tasks():
     projectAssignmentAPIResponse = json.loads(
-        api_to_json("https://api.harvestapp.com/v2/users/me/project_assignments")
+        api_to_json_string("https://api.harvestapp.com/v2/users/me/project_assignments")
     )
     projectBudgetAPIResponse = json.loads(
-        api_to_json("https://api.harvestapp.com/v2/reports/project_budget")
+        api_to_json_string("https://api.harvestapp.com/v2/reports/project_budget")
     )["results"]
     projects_budgets = {
         str(result["project_id"]): result for result in projectBudgetAPIResponse

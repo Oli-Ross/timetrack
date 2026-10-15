@@ -34,7 +34,7 @@ from calendar_utils import (
 )
 from db_config import db
 from env import ARCHIVE_DIR, STATUSBAR_FILE
-from harvest import api_to_json, pull, pull_weekly_harvest_hours, push_task
+from harvest import api_to_json_string, pull, pull_weekly_harvest_hours, push_task
 from model import (
     DailyTarget,
     HarvestClient,
@@ -551,6 +551,10 @@ def list_projects() -> None:
     pretty_print.show_budgets()
 
 
+def show_pto():
+    pretty_print.show_pto()
+
+
 def main() -> bool | None:
     parser = argparse.ArgumentParser(description="Time logging tool")
     parser.add_argument(
@@ -662,6 +666,7 @@ def main() -> bool | None:
     subparsers.add_parser("setup", help="Initialize the database (first-time only)")
     subparsers.add_parser("edit", help="Edit a task")
     subparsers.add_parser("add", help="Add a task")
+    subparsers.add_parser("pto", help="Show PTO balances")
     delete_parser = subparsers.add_parser("delete", help="Delete a task")
     delete_parser.add_argument(
         "--uuid",
@@ -698,7 +703,7 @@ def main() -> bool | None:
     with db.connection_context():
         match args.command:
             case "api":
-                print(api_to_json(args.url))
+                print(api_to_json_string(args.url))
             case "start":
                 start_task(stopPrevious=True, backfill=args.backfill)
                 assign_task()
@@ -775,6 +780,8 @@ def main() -> bool | None:
                         pretty_print.list_presets()
             case "project":
                 list_projects()
+            case "pto":
+                show_pto()
             case _:
                 print_day_summary()
 
